@@ -23,7 +23,6 @@ ACTIVOS = [
     "IJH.BA",   # iShares Core S&P Mid-Cap ETF
     "ICLN.BA",  # iShares Global Clean Energy
     "ESGU.BA",  # iShares ESG Aware MSCI USA ETF
-    # "IWDA.BA",  # Eliminado por error en Yahoo Finance
     "IVW.BA",   # S&P 500 Growth ETF
     "SPHQ.BA",  # Invesco S&P 500 Quality ETF
     "ACWI.BA",  # iShares MSCI ACWI ETF
@@ -62,7 +61,6 @@ ACTIVOS = [
     "TQQQ.BA",  # ProShares UltraPro QQQ
     "EWY.BA",   # iShares MSCI South Korea
     "SH.BA",    # Short S&P 500
-    # "SI.BA",    # Eliminado por error en Yahoo Finance
     # --- Acciones Sector Cripto / Minería / Blockchain ---
     "MSTR.BA",  # MicroStrategy
     "HUT.BA",   # Hut 8 Mining

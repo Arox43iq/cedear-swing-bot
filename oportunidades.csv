@@ -1,0 +1,7 @@
+Fecha_Hora,Activo,Precio,Banda_Inferior,EMA_200,Stoch_RSI,Estrategia
+2026-09-03 11:36,COST.BA,30460.0,30524.21,30200.95,0.0,Pullback Diario Alcista (Bollinger + StochRSI)
+2026-09-03 12:00,COST.BA,30520.0,30540.43,30201.54,0.0,Pullback Diario Alcista (Bollinger + StochRSI)
+2026-09-03 12:01,COST.BA,30520.0,30540.43,30201.54,0.0,Pullback Diario Alcista (Bollinger + StochRSI)
+2026-09-03 12:16,COST.BA,30540.0,30545.71,30201.74,0.0,Pullback Diario Alcista (Bollinger + StochRSI)
+2026-09-03 13:36,ASML.BA,17850.0,17870.14,15474.73,0.0,Pullback Diario Alcista (Bollinger + StochRSI)
+2026-09-03 13:58,ASML.BA,17830.0,17864.83,15474.54,0.0,Pullback Diario Alcista (Bollinger + StochRSI)

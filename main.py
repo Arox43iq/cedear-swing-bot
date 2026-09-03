@@ -3,9 +3,9 @@ import os
 import pandas as pd
 import yfinance as yf
 
-# Universo optimizado de CEDEARs, ETFs y Cripto-activos funcionales en BYMA (Cocos)
+# Universo ampliado de CEDEARs, ETFs y Cripto-activos funcionales en BYMA (Cocos)
 ACTIVOS = [
-    # --- ETFs Globales y Cripto del Broker ---
+    # --- ETFs Globales, Índices y Cripto previos ---
     "SPY.BA",  # S&P 500
     "QQQ.BA",  # Nasdaq 100
     "DIA.BA",  # Dow Jones
@@ -13,9 +13,59 @@ ACTIVOS = [
     "ARKK.BA",  # Ark Innovation
     "IBIT.BA",  # iShares Bitcoin Trust ETF
     "ETHA.BA",  # iShares Ethereum Trust ETF
+    # --- Nuevos ETFs y Activos de las capturas (Región, Sectores, Commodities y Otros) ---
+    "IEUR.BA",  # Europe ETF
+    "EFA.BA",   # iShares MSCI EAFE ETF
+    "VXX.BA",   # iPath Series B S&P 500 VIX
+    "XLY.BA",   # S&P 500 Consumer Discretionary ETF
+    "XLB.BA",   # S&P 500 Materials ETF
+    "XME.BA",   # State Street SPDR S&P Metals & Mining
+    "IJH.BA",   # iShares Core S&P Mid-Cap ETF
+    "ICLN.BA",  # iShares Global Clean Energy
+    "ESGU.BA",  # iShares ESG Aware MSCI USA ETF
+    "IWDA.BA",  # iShares Core MSCI World UCITS ETF
+    "IVW.BA",   # S&P 500 Growth ETF
+    "SPHQ.BA",  # Invesco S&P 500 Quality ETF
+    "ACWI.BA",  # iShares MSCI ACWI ETF
+    "IVE.BA",   # S&P 500 Value ETF
+    "CIBR.BA",  # First Trust NASDAQ Cybersecurity ETF
+    "XLC.BA",   # S&P 500 Communication ETF
+    "XLRE.BA",  # State Street Real Estate Select Sector
+    "IEMG.BA",  # iShares Core MSCI Emerging Markets ETF
+    "ILF.BA",   # iShares Latin America 40 ETF
+    "IBB.BA",   # Nasdaq Biotechnology ETF
+    "EWJ.BA",   # iShares MSCI Japan ETF
+    "ITA.BA",   # iShares US Aerospace & Defense ETF
+    "URA.BA",   # Global X Uranium ETF
+    "XLI.BA",   # S&P 500 Industrial ETF
+    "RSP.BA",   # Invesco S&P 500 Equal Weight
+    "VEA.BA",   # Developed Markets ETF
+    "XLV.BA",   # S&P 500 Health Care ETF
+    "USO.BA",   # United States Oil Fund
+    "SPXL.BA",  # Direxion Daily S&P 500 Bull 3X
+    "PSQ.BA",   # Proshares Short QQQ ETF
+    "XLK.BA",   # S&P 500 TECH ETF
+    "VIG.BA",   # Vanguard Dividend Appreciation ETF
+    "FXI.BA",   # ETF China Large-Cap
+    "IVV.BA",   # iShares Core S&P 500 ETF
+    "EWZ.BA",   # iShares MSCI Brazil ETF
+    "GLD.BA",   # SPDR Gold Shares ETF
+    "SLV.BA",   # iShares Silver Trust
+    "COPX.BA",  # Global X Copper Miners ETF
+    "SMH.BA",   # VanEck Semiconductor ETF
+    "GDX.BA",   # VanEck Gold Miners ETF
+    "XLE.BA",   # State Street Energy Select Sector SPDR
+    "XLP.BA",   # S&P 500 Consumer ETF
+    "EEM.BA",   # MSCI Emerging Markets
+    "XLF.BA",   # Financial SPDR
+    "XLU.BA",   # Utilities Select Sector SPDR Fund ETF
+    "TQQQ.BA",  # ProShares UltraPro QQQ
+    "EWY.BA",   # iShares MSCI South Korea
+    "SH.BA",    # Short S&P 500
+    "SI.BA",    # Silvergate / Cripto afín
     # --- Acciones Sector Cripto / Minería / Blockchain ---
     "MSTR.BA",  # MicroStrategy
-    "HUT.BA",  # Hut 8 Mining
+    "HUT.BA",   # Hut 8 Mining
     "COIN.BA",  # Coinbase
     "KEEL.BA",  # Keel Infrastructure / Bitfarms
     "RIOT.BA",  # Riot Platforms
@@ -28,13 +78,13 @@ ACTIVOS = [
     "AMZN.BA",  # Amazon
     "TSLA.BA",  # Tesla
     "NFLX.BA",  # Netflix
-    "AMD.BA",  # AMD
+    "AMD.BA",   # AMD
     "INTC.BA",  # Intel
     "QCOM.BA",  # Qualcomm
-    "IBM.BA",  # IBM
+    "IBM.BA",   # IBM
     "ORCL.BA",  # Oracle
     "ADBE.BA",  # Adobe
-    "CRM.BA",  # Salesforce
+    "CRM.BA",   # Salesforce
     "PYPL.BA",  # PayPal
     "UBER.BA",  # Uber
     "ABNB.BA",  # Airbnb
@@ -46,86 +96,86 @@ ACTIVOS = [
     "PANW.BA",  # Palo Alto Networks
     # --- Sector Financiero y Conglomerados ---
     "BRKB.BA",  # Berkshire Hathaway
-    "JPM.BA",  # JPMorgan Chase
-    "C.BA",  # Citigroup
-    "GS.BA",  # Goldman Sachs
-    "WFC.BA",  # Wells Fargo
-    "AXP.BA",  # American Express
-    "NU.BA",  # Nu Bank
+    "JPM.BA",   # JPMorgan Chase
+    "C.BA",     # Citigroup
+    "GS.BA",    # Goldman Sachs
+    "WFC.BA",   # Wells Fargo
+    "AXP.BA",   # American Express
+    "NU.BA",    # Nu Bank
     "STNE.BA",  # StoneCo
-    "BBD.BA",  # Banco Bradesco
+    "BBD.BA",   # Banco Bradesco
     # --- Consumo Masivo y Retail ---
-    "KO.BA",  # Coca-Cola
-    "PEP.BA",  # Pepsico
-    "WMT.BA",  # Walmart
-    "MCD.BA",  # McDonalds
-    "NKE.BA",  # Nike
-    "PG.BA",  # Procter & Gamble
+    "KO.BA",    # Coca-Cola
+    "PEP.BA",   # Pepsico
+    "WMT.BA",   # Walmart
+    "MCD.BA",   # McDonalds
+    "NKE.BA",   # Nike
+    "PG.BA",    # Procter & Gamble
     "DISN.BA",  # Disney
-    "TGT.BA",  # Target
+    "TGT.BA",   # Target
     "ABEV.BA",  # ADR Ambev
     "ARCO.BA",  # Arcos Dorados
     # --- Salud y Farmacéuticas ---
-    "JNJ.BA",  # Johnson & Johnson
-    "PFE.BA",  # Pfizer
+    "JNJ.BA",   # Johnson & Johnson
+    "PFE.BA",   # Pfizer
     "MRNA.BA",  # Moderna
     "ABBV.BA",  # AbbVie
     "AMGN.BA",  # Amgen
-    "ABT.BA",  # Abbott
+    "ABT.BA",   # Abbott
     # --- Energía, Petróleo y Minería ---
-    "XOM.BA",  # Exxon Mobil
-    "CVX.BA",  # Chevron
+    "XOM.BA",   # Exxon Mobil
+    "CVX.BA",   # Chevron
     "VALE.BA",  # Vale
-    "RIO.BA",  # Rio Tinto
-    "KGC.BA",  # Kinross Gold
-    "MUX.BA",  # McEwen
-    "PKS.BA",  # Posco
-    "SID.BA",  # Cia. Siderurgica Nacional
+    "RIO.BA",   # Rio Tinto
+    "KGC.BA",   # Kinross Gold
+    "MUX.BA",   # McEwen
+    "PKS.BA",   # Posco
+    "SID.BA",   # Cia. Siderurgica Nacional
     # --- Industria, Autos y Aeroespacial ---
-    "CAT.BA",  # Caterpillar
-    "DE.BA",   # Deere
-    "GE.BA",   # General Electric
-    "TM.BA",   # Toyota Motors
-    "F.BA",    # Ford
-    "LMT.BA",  # Lockheed Martin
-    "RTX.BA",  # Raytheon
-    "EMBJ.BA", # Embraer
-    "NOKA.BA", # Nokia
-    "CSCO.BA", # Cisco Systems
-    "MDT.BA",  # Medtronic
-    "SPGI.BA", # Standard & Poor's
-    "ADGO.BA", # Adecoagro
-    "GLOB.BA", # Globant
-    "DECK.BA", # Deckers Outdoor Corporation
-    "SYY.BA",  # Sysco
-    "XROX.BA", # Xerox
-    "AAP.BA",  # Advance Auto Parts
-    "SONY.BA", # Sony
-    "CAR.BA",  # Avis Budget Group
-    "NUE.BA",  # Nucor
-    "MSI.BA",  # Motorola
-    "JD.BA",   # Jingdong (JD.com)
-    "UPST.BA", # Upstart
-    "MO.BA",   # Altria
-    "ADI.BA",  # Analog Devices
-    "OXY.BA",  # Occidental Petroleum Corp
-    "TMUS.BA", # T-Mobile US Inc.
-    "TSM.BA",  # Taiwan Semiconductor
-    "BABA.BA", # Alibaba
-    "T.BA",    # AT&T
-    "MU.BA",   # Micron Technology
-    "V.BA",    # Visa
-    "TXR.BA",  # Ternium
-    "LAC.BA",  # Lithium Americas
-    "LLY.BA",  # Eli Lilly & Co
-    "AMAT.BA", # Applied Materials
-    "SATL.BA", # Satellogic
-    "CLS.BA",  # Celestica
-    "RBLX.BA", # Roblox Corp
-    "CCL.BA",  # Carnival Corp
+    "CAT.BA",   # Caterpillar
+    "DE.BA",    # Deere
+    "GE.BA",    # General Electric
+    "TM.BA",    # Toyota Motors
+    "F.BA",     # Ford
+    "LMT.BA",   # Lockheed Martin
+    "RTX.BA",   # Raytheon
+    "EMBJ.BA",  # Embraer
+    "NOKA.BA",  # Nokia
+    "CSCO.BA",  # Cisco Systems
+    "MDT.BA",   # Medtronic
+    "SPGI.BA",  # Standard & Poor's
+    "ADGO.BA",  # Adecoagro
+    "GLOB.BA",  # Globant
+    "DECK.BA",  # Deckers Outdoor Corporation
+    "SYY.BA",   # Sysco
+    "XROX.BA",  # Xerox
+    "AAP.BA",   # Advance Auto Parts
+    "SONY.BA",  # Sony
+    "CAR.BA",   # Avis Budget Group
+    "NUE.BA",   # Nucor
+    "MSI.BA",   # Motorola
+    "JD.BA",    # Jingdong (JD.com)
+    "UPST.BA",  # Upstart
+    "MO.BA",    # Altria
+    "ADI.BA",   # Analog Devices
+    "OXY.BA",   # Occidental Petroleum Corp
+    "TMUS.BA",  # T-Mobile US Inc.
+    "TSM.BA",   # Taiwan Semiconductor
+    "BABA.BA",  # Alibaba
+    "T.BA",     # AT&T
+    "MU.BA",    # Micron Technology
+    "V.BA",     # Visa
+    "TXR.BA",   # Ternium
+    "LAC.BA",   # Lithium Americas
+    "LLY.BA",   # Eli Lilly & Co
+    "AMAT.BA",  # Applied Materials
+    "SATL.BA",  # Satellogic
+    "CLS.BA",   # Celestica
+    "RBLX.BA",  # Roblox Corp
+    "CCL.BA",   # Carnival Corp
 ]
 
-# Evitar duplicados por seguridad
+# Evitar duplicados por seguridad de forma automática
 ACTIVOS = list(dict.fromkeys(ACTIVOS))
 
 ARCHIVO_LOG = "oportunidades.csv"
@@ -158,7 +208,7 @@ def verificar_alertas():
   verificar_mercado_general()
   print(
       f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera"
-      f" avanzada de {len(ACTIVOS)} activos con filtros institucionales..."
+      f" masiva de {len(ACTIVOS)} activos con filtros institucionales..."
   )
 
   resultados_analisis = []
@@ -246,7 +296,7 @@ def verificar_alertas():
         nuevas_oportunidades.append(registro)
 
     except Exception as e:
-      pass  # Evita romper la ejecución por algún error puntual de yfinance
+      pass  # Evita romper por errores puntuales de yfinance en algún activo
 
   resultados_analisis.sort(key=lambda x: x["puntuacion"])
 

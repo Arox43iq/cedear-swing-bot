@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# Universo masivo de ETFs y CEDEARs de alta liquidez en BYMA (Actualizado)
+# Universo optimizado de CEDEARs y ETFs funcionales en BYMA
 ACTIVOS = [
     # --- ETFs Globales ---
     "SPY.BA",  # S&P 500
@@ -31,30 +31,21 @@ ACTIVOS = [
     "PYPL.BA", # PayPal
     "UBER.BA", # Uber
     "ABNB.BA", # Airbnb
-    "AVGO.BA", # Broadcom
     "ASML.BA", # ASML Holding
     "PLTR.BA", # Palantir Technologies
-    "HOOD.BA", # Robinhood Markets
-    "SHOP.BA", # Shopify
-    "SNOW.BA", # Snowflake
     "MRVL.BA", # Marvell Technology
     "SPOT.BA", # Spotify
-    "ZM.BA",   # Zoom Video
-    "TWLO.BA", # Twilio
     "EBAY.BA", # Ebay
     "PANW.BA", # Palo Alto Networks
 
     # --- Sector Financiero y Conglomerados ---
     "BRKB.BA", # Berkshire Hathaway
     "JPM.BA",  # JPMorgan Chase
-    "BAC.BA",  # Bank of America
     "C.BA",    # Citigroup
     "GS.BA",   # Goldman Sachs
     "WFC.BA",  # Wells Fargo
     "AXP.BA",  # American Express
-    "XP.BA",   # XP Inc.
     "NU.BA",   # Nu Bank
-    "PAGS.BA", # PagSeguro
     "STNE.BA", # StoneCo
     "BBD.BA",  # Banco Bradesco
 
@@ -77,13 +68,10 @@ ACTIVOS = [
     "ABBV.BA", # AbbVie
     "AMGN.BA", # Amgen
     "ABT.BA",  # Abbott
-    "HIMS.BA", # Hims & Hers Health
 
     # --- Energía, Petróleo y Minería ---
     "XOM.BA",  # Exxon Mobil
     "CVX.BA",  # Chevron
-    "PBR.BA",  # Petrobras brasileiro
-    "VIST.BA", # Visto Oil & Gas
     "VALE.BA", # Vale
     "RIO.BA",  # Rio Tinto
     "KGC.BA",  # Kinross Gold
@@ -93,12 +81,10 @@ ACTIVOS = [
 
     # --- Industria, Autos y Aeroespacial ---
     "CAT.BA",  # Caterpillar
-    "BA.C.BA", # Bank of America / Industrial
     "DE.BA",   # Deere
     "GE.BA",   # General Electric
     "TM.BA",   # Toyota Motors
     "F.BA",    # Ford
-    "GM.BA",   # General Motors
     "LMT.BA",  # Lockheed Martin
     "RTX.BA",  # Raytheon
     "EMBJ.BA", # Embraer
@@ -111,51 +97,36 @@ ACTIVOS = [
     "DECK.BA", # Deckers Outdoor Corporation
     "SYY.BA",  # Sysco
     "XROX.BA", # Xerox
-    "FISV.BA", # Fiserv
     "AAP.BA",  # Advance Auto Parts
     "SONY.BA", # Sony
     "CAR.BA",  # Avis Budget Group
     "NUE.BA",  # Nucor
     "MSI.BA",  # Motorola
-    "LRCX.BA", # Lam Research
     "JD.BA",   # Jingdong (JD.com)
     "UPST.BA", # Upstart
     "MO.BA",   # Altria
     "ADI.BA",  # Analog Devices
-    "RKLB.BA", # Rocket Lab Corp
     "OXY.BA",  # Occidental Petroleum Corp
     "TMUS.BA", # T-Mobile US Inc.
-    "DOW.BA",  # Dow
     "TSM.BA",  # Taiwan Semiconductor
     "BABA.BA", # Alibaba
-    "BIOX.BA", # Bioceres
     "T.BA",    # AT&T
     "MU.BA",   # Micron Technology
-    "AAL.BA",  # American Airlines
     "V.BA",    # Visa
     "TXR.BA",  # Ternium
-    "SNDK.BA", # SanDisk Corporation
     "LAC.BA",  # Lithium Americas
     "LLY.BA",  # Eli Lilly & Co
     "AMAT.BA", # Applied Materials
-    "ASTS.BA", # AST SpaceMobile Inc
     "SATL.BA", # Satellogic
-    "NBIS.BA", # Nebius Group N.V
-    "IREN.BA", # Iren LTD
     "CLS.BA",  # Celestica
     "RBLX.BA", # Roblox Corp
-    "XYZ.BA",  # Block Inc.
-    "TEN.BA",  # Tenaris
-    "NATU3.BA",# Natura
-    "MP.BA",   # MP Materials Corp.
-    "CCL.BA",  # Carnival Corp
-    "DESP.BA"  # Despegar
+    "CCL.BA"   # Carnival Corp
 ]
 
 ARCHIVO_LOG = "oportunidades.csv"
 
 def verificar_alertas():
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando y ordenando cartera masiva de {len(ACTIVOS)} activos...")
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando y ordenando cartera optimizada de {len(ACTIVOS)} activos...")
     
     resultados_analisis = []
     nuevas_oportunidades = []

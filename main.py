@@ -3,24 +3,23 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-# Cartera Global Actualizada: ETFs, Activos Cripto/Blockchain del Broker y CEDEARs
+# Cartera Completa: 103 Activos originales + ETFs globales y Cripto-CEDEARs de tu broker
 ASSETS = [
-    # ETFs Globales y Cripto de tu Broker (en formato CEDEAR .BA)
+    # Cripto-activos y ETFs de criptomonedas de tu broker (.BA)
     "IBIT.BA",
     "ETHA.BA",
-    # Acciones del sector Cripto / Minería / Blockchain disponibles en tu broker
     "MSTR.BA",
     "HUT.BA",
     "COIN.BA",
     "KEEL.BA",
     "RIOT.BA",
-    # ETFs Macro Tradicionales
+    # ETFs Globales y Macro
     "SPY.BA",
     "QQQ.BA",
     "IWM.BA",
     "GLD.BA",
     "TLT.BA",
-    # CEDEARs Destacados (Argentina)
+    # Los 103 Activos del panel general y CEDEARs avanzados
     "AAPL.BA",
     "MSFT.BA",
     "GOOGL.BA",
@@ -42,7 +41,84 @@ ASSETS = [
     "AMAT.BA",
     "ABT.BA",
     "GE.BA",
+    "DIS.BA",
+    "PYPL.BA",
+    "INTC.BA",
+    "QCOM.BA",
+    "CSCO.BA",
+    "IBM.BA",
+    "ORCL.BA",
+    "CRM.BA",
+    "ADBE.BA",
+    "TXN.BA",
+    "AMGN.BA",
+    "GILD.BA",
+    "SBUX.BA",
+    "NKE.BA",
+    "MCD.BA",
+    "WMT.BA",
+    "PG.BA",
+    "JPM.BA",
+    "BAC.BA",
+    "WFC.BA",
+    "C.BA",
+    "GS.BA",
+    "MS.BA",
+    "AXP.BA",
+    "BLK.BA",
+    "CAT.BA",
+    "DE.BA",
+    "BA.BA",
+    "HON.BA",
+    "UPS.BA",
+    "FDX.BA",
+    "MMM.BA",
+    "GE.BA",
+    "XOM.BA",
+    "CVX.BA",
+    "COP.BA",
+    "SLB.BA",
+    "EOG.BA",
+    "PXD.BA",
+    "OXY.BA",
+    "NEE.BA",
+    "DUK.BA",
+    "SO.BA",
+    "D.BA",
+    "AEP.BA",
+    "T.BA",
+    "VZ.BA",
+    "TM.BA",
+    "HMC.BA",
+    "NLY.BA",
+    "BABA.BA",
+    "JD.BA",
+    "BIDU.BA",
+    "PDD.BA",
+    "NIO.BA",
+    "TCOM.BA",
+    "VALO.BA",
+    "YPFD.BA",
+    "GGAL.BA",
+    "BMA.BA",
+    "CRES.BA",
+    "TECO2.BA",
+    "TXAR.BA",
+    "ALUA.BA",
+    "CEPU.BA",
+    "EDN.BA",
+    "PAMP.BA",
+    "BYMA.BA",
+    "LOMA.BA",
+    "IRSA.BA",
+    "SUPV.BA",
+    "CVH.BA",
+    "TGNO4.BA",
+    "TGSU2.BA",
 ]
+
+# Eliminamos duplicados por si acaso quedó alguno repetido
+ASSETS = list(dict.fromkeys(ASSETS))
 
 
 def calculate_stoch_rsi(close, period=14):
@@ -88,7 +164,7 @@ def main():
 
   print(
       f"\n[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando"
-      f" cartera combinada de {len(ASSETS)} activos...\n"
+      f" cartera masiva global de {len(ASSETS)} activos...\n"
   )
 
   results = []
@@ -151,7 +227,7 @@ def main():
 
   print(
       "=" * 85
-      + "\n RANKING DE OPORTUNIDADES (CEDEARs, ETFs Y CRIPTO-ACCIONES)\n"
+      + "\n RANKING DE OPORTUNIDADES (CARTERA GLOBAL Y AMPLIADA)\n"
       + "=" * 85
   )
   if not results:
@@ -160,7 +236,7 @@ def main():
     for i, r in enumerate(results, 1):
       print(
           f"{i:2d}. {r['ticker']:<10} -> Precio: ${r['price']:<10.2f} | Banda"
-          f" Inf: ${r['lower_band']:<10.2f} | StochRSI: {r['stoch_rsi']:>5.1f} |"
+          f" Inf: ${r['lower_band']:<10.2f} | StochRSI: {r['stox_rsi'] if 'stox_rsi' in r else r['stoch_rsi']:>5.1f} |"
           f" Dist: {r['dist']:>+5.2f}% | {r['vol_status']}"
       )
 

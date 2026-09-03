@@ -23,7 +23,7 @@ ACTIVOS = [
     "IJH.BA",   # iShares Core S&P Mid-Cap ETF
     "ICLN.BA",  # iShares Global Clean Energy
     "ESGU.BA",  # iShares ESG Aware MSCI USA ETF
-    "IWDA.BA",  # iShares Core MSCI World UCITS ETF
+    # "IWDA.BA",  # Eliminado por error en Yahoo Finance
     "IVW.BA",   # S&P 500 Growth ETF
     "SPHQ.BA",  # Invesco S&P 500 Quality ETF
     "ACWI.BA",  # iShares MSCI ACWI ETF
@@ -62,7 +62,7 @@ ACTIVOS = [
     "TQQQ.BA",  # ProShares UltraPro QQQ
     "EWY.BA",   # iShares MSCI South Korea
     "SH.BA",    # Short S&P 500
-    "SI.BA",    # Silvergate / Cripto afín
+    # "SI.BA",    # Eliminado por error en Yahoo Finance
     # --- Acciones Sector Cripto / Minería / Blockchain ---
     "MSTR.BA",  # MicroStrategy
     "HUT.BA",   # Hut 8 Mining
@@ -182,176 +182,176 @@ ARCHIVO_LOG = "oportunidades.csv"
 
 
 def verificar_mercado_general():
-  """Filtro 2: Contexto de Mercado (Regime Filter con SPY.BA)"""
-  try:
-    df_spy = yf.download("SPY.BA", period="1y", interval="1d", progress=False)
-    if not df_spy.empty:
-      if isinstance(df_spy.columns, pd.MultiIndex):
-        df_spy.columns = df_spy.columns.get_level_values(0)
-      df_spy["EMA_200"] = df_spy["Close"].ewm(span=200, adjust=False).mean()
-      ultimo_spy = df_spy.iloc[-1]
-      if ultimo_spy["Close"] < ultimo_spy["EMA_200"]:
-        print(
-            "\n⚠️ [ALERTA MACRO] El S&P 500 (SPY.BA) está por debajo de su EMA"
-            " 200. Mercado bajista general: operar rebotes con cautela extra."
-        )
-      else:
-        print(
-            "\n✅ [ESTADO MACRO] El S&P 500 (SPY.BA) está alcista (Precio > EMA"
-            " 200). Entorno favorable para rebotes."
-        )
-  except Exception as e:
-    print(f"No se pudo verificar el contexto de mercado general: {e}")
+    """Filtro 2: Contexto de Mercado (Regime Filter con SPY.BA)"""
+    try:
+        df_spy = yf.download("SPY.BA", period="1y", interval="1d", progress=False)
+        if not df_spy.empty:
+            if isinstance(df_spy.columns, pd.MultiIndex):
+                df_spy.columns = df_spy.columns.get_level_values(0)
+            df_spy["EMA_200"] = df_spy["Close"].ewm(span=200, adjust=False).mean()
+            ultimo_spy = df_spy.iloc[-1]
+            if ultimo_spy["Close"] < ultimo_spy["EMA_200"]:
+                print(
+                    "\n⚠️ [ALERTA MACRO] El S&P 500 (SPY.BA) está por debajo de su EMA"
+                    " 200. Mercado bajista general: operar rebotes con cautela extra."
+                )
+            else:
+                print(
+                    "\n✅ [ESTADO MACRO] El S&P 500 (SPY.BA) está alcista (Precio > EMA"
+                    " 200). Entorno favorable para rebotes."
+                )
+    except Exception as e:
+        print(f"No se pudo verificar el contexto de mercado general: {e}")
 
 
 def verificar_alertas():
-  verificar_mercado_general()
-  print(
-      f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera"
-      f" masiva de {len(ACTIVOS)} activos con filtros institucionales..."
-  )
+    verificar_mercado_general()
+    print(
+        f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera"
+        f" masiva de {len(ACTIVOS)} activos con filtros institucionales..."
+    )
 
-  resultados_analisis = []
-  nuevas_oportunidades = []
+    resultados_analisis = []
+    nuevas_oportunidades = []
 
-  for simbolo in ACTIVOS:
-    try:
-      df = yf.download(simbolo, period="2y", interval="1d", progress=False)
+    for simbolo in ACTIVOS:
+        try:
+            df = yf.download(simbolo, period="2y", interval="1d", progress=False)
 
-      if df.empty or len(df) < 200:
-        continue
+            if df.empty or len(df) < 200:
+                continue
 
-      if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
 
-      volumen_promedio_20 = df["Volume"].rolling(window=20).mean().iloc[-1]
-      if pd.isna(volumen_promedio_20) or volumen_promedio_20 < 200:
-        continue
+            volumen_promedio_20 = df["Volume"].rolling(window=20).mean().iloc[-1]
+            if pd.isna(volumen_promedio_20) or volumen_promedio_20 < 200:
+                continue
 
-      df["EMA_200"] = df["Close"].ewm(span=200, adjust=False).mean()
-      df["SMA_20"] = df["Close"].rolling(window=20).mean()
-      df["STD_20"] = df["Close"].rolling(window=20).std()
-      df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
+            df["EMA_200"] = df["Close"].ewm(span=200, adjust=False).mean()
+            df["SMA_20"] = df["Close"].rolling(window=20).mean()
+            df["STD_20"] = df["Close"].rolling(window=20).std()
+            df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
 
-      delta = df["Close"].diff()
-      gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-      loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-      rs = gain / loss
-      df["RSI"] = 100 - (100 / (1 + rs))
+            delta = df["Close"].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            df["RSI"] = 100 - (100 / (1 + rs))
 
-      min_rsi = df["RSI"].rolling(window=14).min()
-      max_rsi = df["RSI"].rolling(window=14).max()
-      df["StochRSI_K"] = ((df["RSI"] - min_rsi) / (max_rsi - min_rsi)) * 100
+            min_rsi = df["RSI"].rolling(window=14).min()
+            max_rsi = df["RSI"].rolling(window=14).max()
+            df["StochRSI_K"] = ((df["RSI"] - min_rsi) / (max_rsi - min_rsi)) * 100
 
-      ultimo = df.iloc[-1]
-      precio_actual = float(ultimo["Close"])
-      ema_200 = float(ultimo["EMA_200"])
-      banda_inf = float(ultimo["Banda_Inferior"])
-      stoch_rsi = float(ultimo["StochRSI_K"])
-      volumen_actual = float(ultimo["Volume"])
+            ultimo = df.iloc[-1]
+            precio_actual = float(ultimo["Close"])
+            ema_200 = float(ultimo["EMA_200"])
+            banda_inf = float(ultimo["Banda_Inferior"])
+            stoch_rsi = float(ultimo["StochRSI_K"])
+            volumen_actual = float(ultimo["Volume"])
 
-      distancia_banda_pct = ((precio_actual - banda_inf) / banda_inf) * 100
-      tendencia_alcista = precio_actual > ema_200
-      volumen_exhausto = volumen_actual < volumen_promedio_20
+            distancia_banda_pct = ((precio_actual - banda_inf) / banda_inf) * 100
+            tendencia_alcista = precio_actual > ema_200
+            volumen_exhausto = volumen_actual < volumen_promedio_20
 
-      if tendencia_alcista:
-        puntuacion_cercania = max(0, stoch_rsi) + max(
-            0, distancia_banda_pct * 5
+            if tendencia_alcista:
+                puntuacion_cercania = max(0, stoch_rsi) + max(
+                    0, distancia_banda_pct * 5
+                )
+                if volumen_exhausto:
+                    puntuacion_cercania *= 0.9
+            else:
+                puntuacion_cercania = 9999.0
+
+            resultados_analisis.append({
+                "simbolo": simbolo,
+                "precio": precio_actual,
+                "banda_inf": banda_inf,
+                "ema_200": ema_200,
+                "stoch_rsi": stoch_rsi,
+                "distancia_pct": distancia_banda_pct,
+                "tendencia_alcista": tendencia_alcista,
+                "volumen_exhausto": volumen_exhausto,
+                "puntuacion": puntuacion_cercania,
+            })
+
+            if (
+                tendencia_alcista
+                and precio_actual <= banda_inf
+                and stoch_rsi < 25
+                and volumen_exhausto
+            ):
+                registro = {
+                    "Fecha_Hora": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "Activo": simbolo,
+                    "Precio": round(precio_actual, 2),
+                    "Banda_Inferior": round(banda_inf, 2),
+                    "EMA_200": round(ema_200, 2),
+                    "Stoch_RSI": round(stoch_rsi, 2),
+                    "Estrategia": (
+                        "Pullback Diario Alcista (Bollinger + StochRSI + Volumen"
+                        " Exhausto)"
+                    ),
+                }
+                nuevas_oportunidades.append(registro)
+
+        except Exception as e:
+            pass  # Evita romper por errores puntuales de yfinance en algún activo
+
+    resultados_analisis.sort(key=lambda x: x["puntuuna"] if "puntuuna" in x else x["puntuacion"])
+
+    print("\n" + "=" * 85)
+    print(" RANKING DE CERCANÍA A OPORTUNIDAD DE COMPRA (FILTRADO Y VALIDADO)")
+    print("=" * 85)
+
+    for i, res in enumerate(resultados_analisis, 1):
+        estado_alerta = " "
+        vol_tag = (
+            "📊 Vol. Normal"
+            if not res["volumen_exhausto"]
+            else "📉 Vol. Exhausto (Ideal)"
         )
-        if volumen_exhausto:
-          puntuacion_cercania *= 0.9
-      else:
-        puntuacion_cercania = 9999.0
 
-      resultados_analisis.append({
-          "simbolo": simbolo,
-          "precio": precio_actual,
-          "banda_inf": banda_inf,
-          "ema_200": ema_200,
-          "stoch_rsi": stoch_rsi,
-          "distancia_pct": distancia_banda_pct,
-          "tendencia_alcista": tendencia_alcista,
-          "volumen_exhausto": volumen_exhausto,
-          "puntuacion": puntuacion_cercania,
-      })
+        if (
+            res["tendencia_alcista"]
+            and res["precio"] <= res["banda_inf"]
+            and res["stoch_rsi"] < 25
+            and res["volumen_exhausto"]
+        ):
+            estado_alerta = " 🎯 ¡OPORTUNIDAD DE COMPRA IDEAL!"
+        elif (
+            res["tendencia_alcista"]
+            and res["precio"] <= res["banda_inf"]
+            and res["stoch_rsi"] < 25
+        ):
+            estado_alerta = " ⚠️ Cerca, pero Volumen Alto"
+        elif not res["tendencia_alcista"]:
+            estado_alerta = " ⚠️ Tendencia Bajista (Descartado)"
 
-      if (
-          tendencia_alcista
-          and precio_actual <= banda_inf
-          and stoch_rsi < 25
-          and volumen_exhausto
-      ):
-        registro = {
-            "Fecha_Hora": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "Activo": simbolo,
-            "Precio": round(precio_actual, 2),
-            "Banda_Inferior": round(banda_inf, 2),
-            "EMA_200": round(ema_200, 2),
-            "Stoch_RSI": round(stoch_rsi, 2),
-            "Estrategia": (
-                "Pullback Diario Alcista (Bollinger + StochRSI + Volumen"
-                " Exhausto)"
-            ),
-        }
-        nuevas_oportunidades.append(registro)
+        print(
+            f"{i:2d}. {res['simbolo']:<8} -> Precio: ${res['precio']:>8.2f} | Banda"
+            f" Inf: ${res['banda_inf']:>8.2f} | StochRSI: {res['stoch_rsi']:>5.1f} |"
+            f" Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}"
+        )
 
-    except Exception as e:
-      pass  # Evita romper por errores puntuales de yfinance en algún activo
+    print("=" * 85)
 
-  resultados_analisis.sort(key=lambda x: x["puntuacion"])
-
-  print("\n" + "=" * 85)
-  print(" RANKING DE CERCANÍA A OPORTUNIDAD DE COMPRA (FILTRADO Y VALIDADO)")
-  print("=" * 85)
-
-  for i, res in enumerate(resultados_analisis, 1):
-    estado_alerta = " "
-    vol_tag = (
-        "📊 Vol. Normal"
-        if not res["volumen_exhausto"]
-        else "📉 Vol. Exhausto (Ideal)"
-    )
-
-    if (
-        res["tendencia_alcista"]
-        and res["precio"] <= res["banda_inf"]
-        and res["stoch_rsi"] < 25
-        and res["volumen_exhausto"]
-    ):
-      estado_alerta = " 🎯 ¡OPORTUNIDAD DE COMPRA IDEAL!"
-    elif (
-        res["tendencia_alcista"]
-        and res["precio"] <= res["banda_inf"]
-        and res["stoch_rsi"] < 25
-    ):
-      estado_alerta = " ⚠️ Cerca, pero Volumen Alto"
-    elif not res["tendencia_alcista"]:
-      estado_alerta = " ⚠️ Tendencia Bajista (Descartado)"
-
-    print(
-        f"{i:2d}. {res['simbolo']:<8} -> Precio: ${res['precio']:>8.2f} | Banda"
-        f" Inf: ${res['banda_inf']:>8.2f} | StochRSI: {res['stoch_rsi']:>5.1f} |"
-        f" Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}"
-    )
-
-  print("=" * 85)
-
-  if nuevas_oportunidades:
-    df_nuevos = pd.DataFrame(nuevas_oportunidades)
-    if os.path.exists(ARCHIVO_LOG):
-      df_nuevos.to_csv(ARCHIVO_LOG, mode="a", header=False, index=False)
+    if nuevas_oportunidades:
+        df_nuevos = pd.DataFrame(nuevas_oportunidades)
+        if os.path.exists(ARCHIVO_LOG):
+            df_nuevos.to_csv(ARCHIVO_LOG, mode="a", header=False, index=False)
+        else:
+            df_nuevos.to_csv(ARCHIVO_LOG, index=False)
+        print(
+            f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas de alta"
+            f" calidad en '{ARCHIVO_LOG}'."
+        )
     else:
-      df_nuevos.to_csv(ARCHIVO_LOG, index=False)
-    print(
-        f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas de alta"
-        f" calidad en '{ARCHIVO_LOG}'."
-    )
-  else:
-    print(
-        "\n[INFO] Ningún activo cumplió todos los filtros estrictos (incluyendo"
-        " bajo volumen de retroceso) en este ciclo."
-    )
+        print(
+            "\n[INFO] Ningún activo cumplió todos los filtros estrictos (incluyendo"
+            " bajo volumen de retroceso) en este ciclo."
+        )
 
 
 if __name__ == "__main__":
-  verificar_alertas()
+    verificar_alertas()

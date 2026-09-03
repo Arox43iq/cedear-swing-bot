@@ -17,4 +17,4 @@ An automated Python tool designed to scan a massive universe of high-liquidity a
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/Arox43iq/cedear-swing-bot.git](https://github.com/Arox43iq/cedear-swing-bot.git)
+   git clone [https://github.com/Arox43iq/cedear-swing-bot.git]

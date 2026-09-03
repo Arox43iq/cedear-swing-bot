@@ -206,7 +206,7 @@ def verificar_alertas():
     verificar_mercado_general()
     print(
         f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera"
-        f" masiva de {len(ACTIVOS)} activos con filtros institucionales..."
+        f" masiva de {len(ACTIVOS)} activos con filtros institucionales y de corto plazo..."
     )
 
     resultados_analisis = []
@@ -226,26 +226,32 @@ def verificar_alertas():
             if pd.isna(volumen_promedio_20) or volumen_promedio_20 < 200:
                 continue
 
+            # --- INDICADORES TÉCNICOS ---
             df["EMA_200"] = df["Close"].ewm(span=200, adjust=False).mean()
+            df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()  # EMA Corto Plazo
             df["SMA_20"] = df["Close"].rolling(window=20).mean()
             df["STD_20"] = df["Close"].rolling(window=20).std()
             df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
 
+            # RSI Rápido de Corto Plazo (7 periodos)
             delta = df["Close"].diff()
-            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-            rs = gain / loss
-            df["RSI"] = 100 - (100 / (1 + rs))
+            gain_7 = (delta.where(delta > 0, 0)).rolling(window=7).mean()
+            loss_7 = (-delta.where(delta < 0, 0)).rolling(window=7).mean()
+            rs_7 = gain_7 / loss_7
+            df["RSI_7"] = 100 - (100 / (1 + rs_7))
 
-            min_rsi = df["RSI"].rolling(window=14).min()
-            max_rsi = df["RSI"].rolling(window=14).max()
-            df["StochRSI_K"] = ((df["RSI"] - min_rsi) / (max_rsi - min_rsi)) * 100
+            # StochRSI basado en el RSI de 7 periodos (ventana de 14 para estocástico)
+            min_rsi7 = df["RSI_7"].rolling(window=14).min()
+            max_rsi7 = df["RSI_7"].rolling(window=14).max()
+            df["StochRSI_K"] = ((df["RSI_7"] - min_rsi7) / (max_rsi7 - min_rsi7)) * 100
 
             ultimo = df.iloc[-1]
             precio_actual = float(ultimo["Close"])
             ema_200 = float(ultimo["EMA_200"])
+            ema_20 = float(ultimo["EMA_20"])
             banda_inf = float(ultimo["Banda_Inferior"])
             stoch_rsi = float(ultimo["StochRSI_K"])
+            rsi_7 = float(ultimo["RSI_7"])
             volumen_actual = float(ultimo["Volume"])
 
             distancia_banda_pct = ((precio_actual - banda_inf) / banda_inf) * 100
@@ -266,7 +272,9 @@ def verificar_alertas():
                 "precio": precio_actual,
                 "banda_inf": banda_inf,
                 "ema_200": ema_200,
+                "ema_20": ema_20,
                 "stoch_rsi": stoch_rsi,
+                "rsi_7": rsi_7,
                 "distancia_pct": distancia_banda_pct,
                 "tendencia_alcista": tendencia_alcista,
                 "volumen_exhausto": volumen_exhausto,
@@ -285,10 +293,11 @@ def verificar_alertas():
                     "Precio": round(precio_actual, 2),
                     "Banda_Inferior": round(banda_inf, 2),
                     "EMA_200": round(ema_200, 2),
-                    "Stoch_RSI": round(stoch_rsi, 2),
+                    "EMA_20": round(ema_20, 2),
+                    "Stoch_RSI_7": round(stoch_rsi, 2),
+                    "RSI_7": round(rsi_7, 2),
                     "Estrategia": (
-                        "Pullback Diario Alcista (Bollinger + StochRSI + Volumen"
-                        " Exhausto)"
+                        "Pullback Corto Plazo (Bollinger + StochRSI(7) + Volumen Exhausto)"
                     ),
                 }
                 nuevas_oportunidades.append(registro)
@@ -296,7 +305,7 @@ def verificar_alertas():
         except Exception as e:
             pass  # Evita romper por errores puntuales de yfinance en algún activo
 
-    resultados_analisis.sort(key=lambda x: x["puntuuna"] if "puntuuna" in x else x["puntuacion"])
+    resultados_analisis.sort(key=lambda x: x["puntuacion"])
 
     print("\n" + "=" * 85)
     print(" RANKING DE CERCANÍA A OPORTUNIDAD DE COMPRA (FILTRADO Y VALIDADO)")
@@ -328,7 +337,7 @@ def verificar_alertas():
 
         print(
             f"{i:2d}. {res['simbolo']:<8} -> Precio: ${res['precio']:>8.2f} | Banda"
-            f" Inf: ${res['banda_inf']:>8.2f} | StochRSI: {res['stoch_rsi']:>5.1f} |"
+            f" Inf: ${res['banda_inf']:>8.2f} | StochRSI(7): {res['stoch_rsi']:>5.1f} |"
             f" Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}"
         )
 

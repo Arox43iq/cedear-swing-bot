@@ -29,6 +29,7 @@ Descargá este repositorio como archivo ZIP desde el botón verde **"Code" > "Do
 Copiá y pegá este comando en la terminal y apretá Enter:
 
 pip install pandas yfinance
+
 5. Ejecutar el bot
 Una vez instalado, escribí el siguiente comando y apretá Enter para ponerlo a correr:
 

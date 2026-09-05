@@ -264,7 +264,8 @@ def auditar_rendimiento_alertas():
         return
 
     try:
-        df_log = pd.read_csv(ARCHIVO_LOG)
+        # Agregamos on_bad_lines='skip' para evitar errores si el CSV tiene formatos viejos
+        df_log = pd.read_csv(ARCHIVO_LOG, on_bad_lines='skip')
         if df_log.empty or "Fecha_Hora" not in df_log.columns or "Activo" not in df_log.columns:
             return
 

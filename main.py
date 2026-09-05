@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 import os
 import pandas as pd
 import yfinance as yf
@@ -57,9 +57,8 @@ def obtener_ticker_original(simbolo_ba):
 
 
 def analizar_sentimiento_noticia(titulo):
-    """Clasifica de forma rápida y eficiente el sentimiento de una noticia financiera."""
+    """Clasifica el sentimiento de una noticia financiera."""
     titulo_lower = titulo.lower()
-
     palabras_positivas = [
         "best", "buy", "growth", "rebound", "gain", "up", "bull", "boost",
         "high", "upgrade", "profit", "beat", "positive", "strong", "surge"
@@ -86,7 +85,7 @@ def analizar_sentimiento_noticia(titulo):
 
 
 def extraer_datos_fundamentales(simbolo_ba):
-    """Extrae noticias, calcula sentimiento y obtiene próximos earnings silenciando errores 404 de ETFs."""
+    """Extrae noticias, calcula sentimiento y obtiene la fecha exacta del próximo balance."""
     ticker_original = obtener_ticker_original(simbolo_ba)
     ticker_yf = yf.Ticker(ticker_original)
     
@@ -107,25 +106,31 @@ def extraer_datos_fundamentales(simbolo_ba):
         noticias_con_sentimiento.append(("Sin noticias destacadas en el feed actual.", "⚪ [Neutral]"))
 
     proximo_earnings = "No disponible (ETF o N/D)"
+    dias_para_earnings = 999  # Por defecto un número alto si es ETF o no hay datos
+
     try:
         with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
             cal = ticker_yf.calendar
             
+        edates = None
         if cal is not None:
             if isinstance(cal, dict) and "Earnings Date" in cal:
                 edates = cal["Earnings Date"]
-                if edates:
-                    proximo_earnings = str(edates[0]).split("T")[0]
             elif isinstance(cal, pd.DataFrame) and not cal.empty:
-                proximo_earnings = str(cal.index[0]).split("T")[0]
+                edates = cal.index.tolist()
+
+            if edates:
+                fecha_ing = pd.to_datetime(edates[0]).date()
+                proximo_earnings = str(fecha_ing)
+                dias_para_earnings = (fecha_ing - date.today()).days
     except Exception:
         pass
 
-    return noticias_con_sentimiento, proximo_earnings
+    return noticias_con_sentimiento, proximo_earnings, dias_para_earnings
 
 
 def auditar_rendimiento_alertas():
-    """Audita el Win Rate histórico de las alertas guardadas en el CSV a un horizonte de 5 ruedas."""
+    """Audita el Win Rate histórico de las alertas guardadas en el CSV."""
     if not os.path.exists(ARCHIVO_LOG):
         print("\n📊 [AUDITORÍA DE WIN RATE] No hay historial de alertas previo ('oportunidades.csv').")
         return
@@ -143,7 +148,6 @@ def auditar_rendimiento_alertas():
         exitos = 0
         evaluadas = 0
         detalles_resultados = []
-
         hoy = datetime.now().strftime("%Y-%m-%d")
 
         for _, row in df_log.iterrows():
@@ -159,7 +163,6 @@ def auditar_rendimiento_alertas():
                 continue
 
             df_hist = yf.download(simbolo, start=fecha_str, end=hoy, progress=False)
-
             if df_hist.empty or len(df_hist) <= 1:
                 continue
 
@@ -191,16 +194,14 @@ def auditar_rendimiento_alertas():
 
         if evaluadas > 0:
             win_rate = (exitos / evaluadas) * 100
-            print(f"🔹 Total de Alertas Registradas en Historial: {total_alertas}")
-            print(f"🔹 Alertas Evaluables (+5 ruedas transcurridas): {evaluadas}")
-            print(f"🔹 Operaciones Exitosas (Win): {exitos}")
+            print(f"🔹 Total de Alertas Registradas: {total_alertas} | Evaluables: {evaluadas} | Exitosas: {exitos}")
             print(f"🎯 WIN RATE GLOBAL DE LA ESTRATEGIA: {win_rate:.2f}%\n")
             
             print("📋 Detalle de las últimas alertas auditadas:")
             for res in detalles_resultados[-5:]:
-                print(f"   • [{res['Fecha']}] {res['Activo']} | Entrada: ${res['Entrada']:>8.2f} | Máx post: ${res['Max_Alcanzado']:>8.2f} | Retorno: {res['Retorno_Max']:>+.2f}% | {res['Estado']}")
+                print(f"   • [{res['Fecha']}] {res['Activo']} | Entrada: ${res['Entrada']:>8.2f} | Máx: ${res['Max_Alcanzado']:>8.2f} | Retorno: {res['Retorno_Max']:>+.2f}% | {res['Estado']}")
         else:
-            print("ℹ️ [INFO] Las alertas registradas son muy recientes y aún no completaron el ciclo de 5 ruedas para evaluar.")
+            print("ℹ️ [INFO] Las alertas son muy recientes y aún no completaron el ciclo de 5 ruedas.")
         print("=" * 95)
 
     except Exception as e:
@@ -209,7 +210,7 @@ def auditar_rendimiento_alertas():
 
 def verificar_alertas():
     verificar_mercado_general()
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos...")
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos con blindaje institucional...")
 
     resultados_analisis = []
     nuevas_oportunidades = []
@@ -224,8 +225,9 @@ def verificar_alertas():
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
 
+            # Filtro de liquidez optimizado (volumen mínimo de 300 ruedas)
             volumen_promedio_20 = df["Volume"].rolling(window=20).mean().iloc[-1]
-            if pd.isna(volumen_promedio_20) or volumen_promedio_20 < 200:
+            if pd.isna(volumen_promedio_20) or volumen_promedio_20 < 300:
                 continue
 
             # --- INDICADORES TÉCNICOS ---
@@ -235,7 +237,7 @@ def verificar_alertas():
             df["STD_20"] = df["Close"].rolling(window=20).std()
             df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
 
-            # NUEVO FILTRO: Soporte estructural de mediano plazo (Mínimo de las últimas 60 ruedas)
+            # Soporte estructural de mediano plazo (Mínimo de las últimas 60 ruedas)
             df["Soporte_60d"] = df["Low"].rolling(window=60).min()
 
             delta = df["Close"].diff()
@@ -261,8 +263,6 @@ def verificar_alertas():
             distancia_banda_pct = ((precio_actual - banda_inf) / banda_inf) * 100
             tendencia_alcista = precio_actual > ema_200
             volumen_exhausto = volumen_actual < volumen_promedio_20
-
-            # Validación de soporte estructural (Precio a 2.5% o menos del mínimo de 60 ruedas)
             cumple_soporte_estructural = precio_actual <= (soporte_60d * 1.025)
 
             if tendencia_alcista:
@@ -288,19 +288,29 @@ def verificar_alertas():
                 "puntuacion": puntuacion_cercania,
             })
 
+            # Disparo preliminar de alerta base
             if tendencia_alcista and precio_actual <= banda_inf and stoch_rsi < 25 and volumen_exhausto:
-                registro = {
-                    "Fecha_Hora": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    "Activo": simbolo,
-                    "Precio": round(precio_actual, 2),
-                    "Banda_Inferior": round(banda_inf, 2),
-                    "EMA_200": round(ema_200, 2),
-                    "EMA_20": round(ema_20, 2),
-                    "Stoch_RSI_7": round(stoch_rsi, 2),
-                    "RSI_7": round(rsi_7, 2),
-                    "Estrategia": "Pullback Corto Plazo (Bollinger + StochRSI(7) + Vol Exhausto)",
-                }
-                nuevas_oportunidades.append(registro)
+                # Consultar fundamentales y earnings para validación final antes de registrar
+                _, _, dias_para_earnings = extraer_datos_fundamentales(simbolo)
+                
+                # REGLA BLINDADA ANTI-EARNINGS: Si hay balance en los próximos 7 días, se descarta la alerta
+                if dias_para_earnings >= 7:
+                    # Cálculo matemático de Stop Loss y Take Profit
+                    stop_loss = round(soporte_60d * 0.99, 2)  # 1% debajo del soporte estructural
+                    take_profit = round(ema_20, 2)            # Objetivo inicial en la media móvil de 20 ruedas
+
+                    registro = {
+                        "Fecha_Hora": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "Activo": simbolo,
+                        "Precio": round(precio_actual, 2),
+                        "Stop_Loss": stop_loss,
+                        "Take_Profit": take_profit,
+                        "Banda_Inferior": round(banda_inf, 2),
+                        "Soporte_60d": round(soporte_60d, 2),
+                        "Stoch_RSI_7": round(stoch_rsi, 2),
+                        "Estrategia": "Pullback Blindado (Bollinger + StochRSI + Stop Loss Estructural)",
+                    }
+                    nuevas_oportunidades.append(registro)
 
         except Exception:
             pass
@@ -309,30 +319,34 @@ def verificar_alertas():
     top_10 = resultados_analisis[:10]
 
     print("\n" + "=" * 95)
-    print(" TOP 10 RANKING DE CERCANÍA A OPORTUNIDAD DE COMPRA + SENTIMIENTO Y FUNDAMENTALES")
+    print(" TOP 10 RANKING DE CERCANÍA + GESTIÓN DE RIESGO (STOP LOSS / TAKE PROFIT) & FUNDAMENTALES")
     print("=" * 95)
 
     for i, res in enumerate(top_10, 1):
         estado_alerta = " "
         vol_tag = "📊 Vol. Normal" if not res["volumen_exhausto"] else "📉 Vol. Exhausto (Ideal)"
-        
-        # Etiqueta visual para notificar si cumple la nueva regla de soporte estructural
-        tag_soporte = " 🛡️ [Soporte Estructural 60d OK]" if res["cumple_soporte"] else ""
+        tag_soporte = " 🛡️ [Soporte 60d OK]" if res["cumple_soporte"] else ""
+
+        # Cálculo referencial de SL/TP para visualización en el Top 10
+        sl_sugerido = round(res["soporte_60d"] * 0.99, 2)
+        tp_sugerido = round(res["ema_20"], 2)
 
         if res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25 and res["volumen_exhausto"]:
-            estado_alerta = " 🎯 ¡OPORTUNIDAD IDEAL!"
+            estado_alerta = " 🎯 ¡OPORTUNIDAD IDEAL BLINDADA!"
         elif res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25:
             estado_alerta = " ⚠️ Cerca, Vol Alto"
         elif not res["tendencia_alcista"]:
             estado_alerta = " ⚠️ Tendencia Bajista"
 
-        print(f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f} | Soporte 60d: ${res['soporte_60d']:>8.2f}"
+        print(f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f}"
+              f"\n    🛑 Stop Loss Sugerido: ${sl_sugerido:>8.2f} | 🎯 Take Profit Sugerido: ${tp_sugerido:>8.2f}"
               f"\n    StochRSI(7): {res['stoch_rsi']:>5.1f} | Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}{tag_soporte}")
 
         print("    🔍 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")
-        noticias, proximo_earnings = extraer_datos_fundamentales(res["simbolo"])
-        print(f"       📅 Próximo Balance (Earnings): {proximo_earnings}")
-        print("       📰 Últimas Noticias Relevantes y Sentimiento:")
+        noticias, proximo_earnings, dias_earn = extraer_datos_fundamentales(res["simbolo"])
+        aviso_earn = f" (⚠️ ¡Atención! Balance en {dias_earn} días)" if dias_earn < 7 and dias_earn != 999 else " (Seguro)"
+        print(f"       📅 Próximo Balance: {proximo_earnings}{aviso_earn}")
+        print("       📰 Últimas Noticias y Sentimiento:")
         for titulo, sentimiento in noticias:
             print(f"          • {sentimiento} {titulo}")
         print("-" * 95)
@@ -345,9 +359,9 @@ def verificar_alertas():
             df_nuevos.to_csv(ARCHIVO_LOG, mode="a", header=False, index=False)
         else:
             df_nuevos.to_csv(ARCHIVO_LOG, index=False)
-        print(f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas de alta calidad en '{ARCHIVO_LOG}'.")
+        print(f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas blindadas con Stop Loss en '{ARCHIVO_LOG}'.")
     else:
-        print("\n[INFO] Ningún activo cumplió todos los filtros estrictos en este ciclo.")
+        print("\n[INFO] Ningún activo cumplió todos los filtros estrictos y de seguridad en este ciclo.")
 
     auditar_rendimiento_alertas()
 

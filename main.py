@@ -92,7 +92,6 @@ def extraer_datos_fundamentales(simbolo_ba):
     
     noticias_con_sentimiento = []
     try:
-        # Se silencian los posibles mensajes de error internos de yfinance
         with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
             news = ticker_yf.news
             
@@ -109,7 +108,6 @@ def extraer_datos_fundamentales(simbolo_ba):
 
     proximo_earnings = "No disponible (ETF o N/D)"
     try:
-        # Se silencian los mensajes de error 404 para los ETFs
         with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
             cal = ticker_yf.calendar
             
@@ -157,7 +155,6 @@ def auditar_rendimiento_alertas():
             except Exception:
                 continue
 
-            # Filtro para evitar errores con alertas de hoy (no tienen historial futuro)
             if fecha_str == hoy:
                 continue
 
@@ -238,6 +235,9 @@ def verificar_alertas():
             df["STD_20"] = df["Close"].rolling(window=20).std()
             df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
 
+            # NUEVO FILTRO: Soporte estructural de mediano plazo (Mínimo de las últimas 60 ruedas)
+            df["Soporte_60d"] = df["Low"].rolling(window=60).min()
+
             delta = df["Close"].diff()
             gain_7 = (delta.where(delta > 0, 0)).rolling(window=7).mean()
             loss_7 = (-delta.where(delta < 0, 0)).rolling(window=7).mean()
@@ -253,6 +253,7 @@ def verificar_alertas():
             ema_200 = float(ultimo["EMA_200"])
             ema_20 = float(ultimo["EMA_20"])
             banda_inf = float(ultimo["Banda_Inferior"])
+            soporte_60d = float(ultimo["Soporte_60d"])
             stoch_rsi = float(ultimo["StochRSI_K"])
             rsi_7 = float(ultimo["RSI_7"])
             volumen_actual = float(ultimo["Volume"])
@@ -260,6 +261,9 @@ def verificar_alertas():
             distancia_banda_pct = ((precio_actual - banda_inf) / banda_inf) * 100
             tendencia_alcista = precio_actual > ema_200
             volumen_exhausto = volumen_actual < volumen_promedio_20
+
+            # Validación de soporte estructural (Precio a 2.5% o menos del mínimo de 60 ruedas)
+            cumple_soporte_estructural = precio_actual <= (soporte_60d * 1.025)
 
             if tendencia_alcista:
                 puntuacion_cercania = max(0, stoch_rsi) + max(0, distancia_banda_pct * 5)
@@ -272,6 +276,7 @@ def verificar_alertas():
                 "simbolo": simbolo,
                 "precio": precio_actual,
                 "banda_inf": banda_inf,
+                "soporte_60d": soporte_60d,
                 "ema_200": ema_200,
                 "ema_20": ema_20,
                 "stoch_rsi": stoch_rsi,
@@ -279,6 +284,7 @@ def verificar_alertas():
                 "distancia_pct": distancia_banda_pct,
                 "tendencia_alcista": tendencia_alcista,
                 "volumen_exhausto": volumen_exhausto,
+                "cumple_soporte": cumple_soporte_estructural,
                 "puntuacion": puntuacion_cercania,
             })
 
@@ -309,6 +315,9 @@ def verificar_alertas():
     for i, res in enumerate(top_10, 1):
         estado_alerta = " "
         vol_tag = "📊 Vol. Normal" if not res["volumen_exhausto"] else "📉 Vol. Exhausto (Ideal)"
+        
+        # Etiqueta visual para notificar si cumple la nueva regla de soporte estructural
+        tag_soporte = " 🛡️ [Soporte Estructural 60d OK]" if res["cumple_soporte"] else ""
 
         if res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25 and res["volumen_exhausto"]:
             estado_alerta = " 🎯 ¡OPORTUNIDAD IDEAL!"
@@ -317,8 +326,8 @@ def verificar_alertas():
         elif not res["tendencia_alcista"]:
             estado_alerta = " ⚠️ Tendencia Bajista"
 
-        print(f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f}"
-              f"\n    StochRSI(7): {res['stoch_rsi']:>5.1f} | Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}")
+        print(f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f} | Soporte 60d: ${res['soporte_60d']:>8.2f}"
+              f"\n    StochRSI(7): {res['stoch_rsi']:>5.1f} | Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}{tag_soporte}")
 
         print("    🔍 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")
         noticias, proximo_earnings = extraer_datos_fundamentales(res["simbolo"])

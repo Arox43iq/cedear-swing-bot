@@ -1,3 +1,5 @@
 Fecha_Hora,Activo,Precio,Banda_Inferior,EMA_200,EMA_20,Stoch_RSI_7,RSI_7,Estrategia
 2026-09-04 22:30,AXP.BA,34500.0,34513.3,33441.81,35462.11,0.0,22.76,Pullback Corto Plazo (Bollinger + StochRSI(7) + Vol Exhausto)
 2026-09-04 22:30,SYY.BA,15840.0,15897.9,15059.39,16354.78,0.0,15.2,Pullback Corto Plazo (Bollinger + StochRSI(7) + Vol Exhausto)
+2026-09-04 22:39,AXP.BA,34500.0,34513.3,33441.81,35462.11,0.0,22.76,Pullback Corto Plazo (Bollinger + StochRSI(7) + Vol Exhausto)
+2026-09-04 22:40,SYY.BA,15840.0,15897.9,15059.39,16354.78,0.0,15.2,Pullback Corto Plazo (Bollinger + StochRSI(7) + Vol Exhausto)

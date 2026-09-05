@@ -5,55 +5,51 @@ import yfinance as yf
 import contextlib
 import io
 
-# Universo ampliado de CEDEARs, ETFs y Cripto-activos funcionales en BYMA (Cocos)
+# Universo ampliado de CEDEARs, ETFs y Cripto-activos (ahora mapeados a su ticker base en dólares)
 ACTIVOS = [
-    "SPY.BA", "QQQ.BA", "DIA.BA", "IWM.BA", "ARKK.BA", "IBIT.BA", "ETHA.BA",
-    "IEUR.BA", "EFA.BA", "VXX.BA", "XLY.BA", "XLB.BA", "XME.BA", "IJH.BA",
-    "ICLN.BA", "ESGU.BA", "IVW.BA", "SPHQ.BA", "ACWI.BA", "IVE.BA", "CIBR.BA",
-    "XLC.BA", "XLRE.BA", "IEMG.BA", "ILF.BA", "IBB.BA", "EWJ.BA", "ITA.BA",
-    "URA.BA", "XLI.BA", "RSP.BA", "VEA.BA", "XLV.BA", "USO.BA", "SPXL.BA",
-    "PSQ.BA", "XLK.BA", "VIG.BA", "FXI.BA", "IVV.BA", "EWZ.BA", "GLD.BA",
-    "SLV.BA", "COPX.BA", "SMH.BA", "GDX.BA", "XLE.BA", "XLP.BA", "EEM.BA",
-    "XLF.BA", "XLU.BA", "TQQQ.BA", "EWY.BA", "SH.BA", "MSTR.BA", "HUT.BA",
-    "COIN.BA", "KEEL.BA", "RIOT.BA", "AAPL.BA", "MSFT.BA", "MELI.BA", "GOOGL.BA",
-    "NVDA.BA", "AMZN.BA", "TSLA.BA", "NFLX.BA", "AMD.BA", "INTC.BA", "QCOM.BA",
-    "IBM.BA", "ORCL.BA", "ADBE.BA", "CRM.BA", "PYPL.BA", "UBER.BA", "ABNB.BA",
-    "ASML.BA", "PLTR.BA", "MRVL.BA", "SPOT.BA", "EBAY.BA", "PANW.BA", "BRKB.BA",
-    "JPM.BA", "C.BA", "GS.BA", "WFC.BA", "AXP.BA", "NU.BA", "STNE.BA", "BBD.BA",
-    "KO.BA", "PEP.BA", "WMT.BA", "MCD.BA", "NKE.BA", "PG.BA", "DISN.BA",
-    "TGT.BA", "ABEV.BA", "ARCO.BA", "JNJ.BA", "PFE.BA", "MRNA.BA", "ABBV.BA",
-    "AMGN.BA", "ABT.BA", "XOM.BA", "CVX.BA", "VALE.BA", "RIO.BA", "KGC.BA",
-    "MUX.BA", "PKS.BA", "SID.BA", "CAT.BA", "DE.BA", "GE.BA", "TM.BA", "F.BA",
-    "LMT.BA", "RTX.BA", "EMBJ.BA", "NOKA.BA", "CSCO.BA", "MDT.BA", "SPGI.BA",
-    "ADGO.BA", "GLOB.BA", "DECK.BA", "SYY.BA", "XROX.BA", "AAP.BA", "SONY.BA",
-    "CAR.BA", "NUE.BA", "MSI.BA", "JD.BA", "UPST.BA", "MO.BA", "ADI.BA",
-    "OXY.BA", "TMUS.BA", "TSM.BA", "BABA.BA", "T.BA", "MU.BA", "V.BA", "TXR.BA",
-    "LAC.BA", "LLY.BA", "AMAT.BA", "SATL.BA", "CLS.BA", "RBLX.BA", "CCL.BA"
+    "SPY", "QQQ", "DIA", "IWM", "ARKK", "IBIT", "ETHA",
+    "IEUR", "EFA", "VXX", "XLY", "XLB", "XME", "IJH",
+    "ICLN", "ESGU", "IVW", "SPHQ", "ACWI", "IVE", "CIBR",
+    "XLC", "XLRE", "IEMG", "ILF", "IBB", "EWJ", "ITA",
+    "URA", "XLI", "RSP", "VEA", "XLV", "USO", "SPXL",
+    "PSQ", "XLK", "VIG", "FXI", "IVV", "EWZ", "GLD",
+    "SLV", "COPX", "SMH", "GDX", "XLE", "XLP", "EEM",
+    "XLF", "XLU", "TQQQ", "EWY", "SH", "MSTR", "HUT",
+    "COIN", "KEEL", "RIOT", "AAPL", "MSFT", "MELI", "GOOGL",
+    "NVDA", "AMZN", "TSLA", "NFLX", "AMD", "INTC", "QCOM",
+    "IBM", "ORCL", "ADBE", "CRM", "PYPL", "UBER", "ABNB",
+    "ASML", "PLTR", "MRVL", "SPOT", "EBAY", "PANW", "BRK-B",
+    "JPM", "C", "GS", "WFC", "AXP", "NU", "STNE", "BBD",
+    "KO", "PEP", "WMT", "MCD", "NKE", "PG", "DIS",
+    "TGT", "ABEV", "ARCO", "JNJ", "PFE", "MRNA", "ABBV",
+    "AMGN", "ABT", "XOM", "CVX", "VALE", "RIO", "KGC",
+    "MUX", "PKS", "SID", "CAT", "DE", "GE", "TM", "F",
+    "LMT", "RTX", "EMBJ", "NOKA", "CSCO", "MDT", "SPGI",
+    "ADGO", "GLOB", "DECK", "SYY", "XROX", "AAP", "SONY",
+    "CAR", "NUE", "MSI", "JD", "UPST", "MO", "ADI",
+    "OXY", "TMUS", "TSM", "BABA", "T", "MU", "V", "TXR",
+    "LAC", "LLY", "AMAT", "SATL", "CLS", "RBLX", "CCL"
 ]
 
 ACTIVOS = list(dict.fromkeys(ACTIVOS))
-ARCHIVO_LOG = "oportunidades.csv"
+ARCHIVO_LOG = "oportunidades_usd.csv"
 
 
 def verificar_mercado_general():
-    """Filtro 2: Contexto de Mercado (Regime Filter con SPY.BA)"""
+    """Filtro 2: Contexto de Mercado (Regime Filter con SPY en dólares)"""
     try:
-        df_spy = yf.download("SPY.BA", period="1y", interval="1d", progress=False)
+        df_spy = yf.download("SPY", period="1y", interval="1d", progress=False)
         if not df_spy.empty:
             if isinstance(df_spy.columns, pd.MultiIndex):
                 df_spy.columns = df_spy.columns.get_level_values(0)
             df_spy["EMA_200"] = df_spy["Close"].ewm(span=200, adjust=False).mean()
             ultimo_spy = df_spy.iloc[-1]
             if ultimo_spy["Close"] < ultimo_spy["EMA_200"]:
-                print("\n⚠️ [ALERTA MACRO] El S&P 500 (SPY.BA) está por debajo de su EMA 200. Mercado bajista general: operar rebotes con cautela extra.")
+                print("\n⚠️ [ALERTA MACRO] El S&P 500 (SPY) está por debajo de su EMA 200 en dólares. Mercado bajista general: operar rebotes con cautela.")
             else:
-                print("\n✅ [ESTADO MACRO] El S&P 500 (SPY.BA) está alcista (Precio > EMA 200). Entorno favorable para rebotes.")
+                print("\n✅ [ESTADO MACRO] El S&P 500 (SPY) está alcista en dólares (Precio > EMA 200). Entorno favorable.")
     except Exception as e:
         print(f"No se pudo verificar el contexto de mercado general: {e}")
-
-
-def obtener_ticker_original(simbolo_ba):
-    return simbolo_ba.replace(".BA", "")
 
 
 def analizar_sentimiento_noticia(titulo):
@@ -84,9 +80,8 @@ def analizar_sentimiento_noticia(titulo):
         return "⚪ [Neutral]"
 
 
-def extraer_datos_fundamentales(simbolo_ba):
-    """Extrae noticias, calcula sentimiento y obtiene la fecha exacta del próximo balance."""
-    ticker_original = obtener_ticker_original(simbolo_ba)
+def extraer_datos_fundamentales(ticker_original):
+    """Extrae noticias, calcula sentimiento y obtiene la fecha exacta del próximo balance en dólares."""
     ticker_yf = yf.Ticker(ticker_original)
     
     noticias_con_sentimiento = []
@@ -106,7 +101,7 @@ def extraer_datos_fundamentales(simbolo_ba):
         noticias_con_sentimiento.append(("Sin noticias destacadas en el feed actual.", "⚪ [Neutral]"))
 
     proximo_earnings = "No disponible (ETF o N/D)"
-    dias_para_earnings = 999  # Por defecto un número alto si es ETF o no hay datos
+    dias_para_earnings = 999  
 
     try:
         with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
@@ -130,9 +125,9 @@ def extraer_datos_fundamentales(simbolo_ba):
 
 
 def auditar_rendimiento_alertas():
-    """Audita el Win Rate histórico de las alertas guardadas en el CSV."""
+    """Audita el Win Rate histórico de las alertas guardadas en el CSV en dólares."""
     if not os.path.exists(ARCHIVO_LOG):
-        print("\n📊 [AUDITORÍA DE WIN RATE] No hay historial de alertas previo ('oportunidades.csv').")
+        print("\n📊 [AUDITORÍA DE WIN RATE] No hay historial de alertas previo en dólares ('oportunidades_usd.csv').")
         return
 
     try:
@@ -141,7 +136,7 @@ def auditar_rendimiento_alertas():
             return
 
         print("\n" + "=" * 95)
-        print("📊 AUDITORÍA HISTÓRICA DE SEÑALES (WIN RATE A 5 RUEDAS)")
+        print("📊 AUDITORÍA HISTÓRICA DE SEÑALES EN DÓLARES (WIN RATE A 5 RUEDAS)")
         print("=" * 95)
 
         total_alertas = len(df_log)
@@ -194,8 +189,8 @@ def auditar_rendimiento_alertas():
 
         if evaluadas > 0:
             win_rate = (exitos / evaluadas) * 100
-            print(f"🔹 Total de Alertas Registradas: {total_alertas} | Evaluables: {evaluadas} | Exitosas: {exitos}")
-            print(f"🎯 WIN RATE GLOBAL DE LA ESTRATEGIA: {win_rate:.2f}%\n")
+            print(f"🔹 Total de Alertas: {total_alertas} | Evaluables: {evaluadas} | Exitosas: {exitos}")
+            print(f"🎯 WIN RATE GLOBAL EN DÓLARES: {win_rate:.2f}%\n")
             
             print("📋 Detalle de las últimas alertas auditadas:")
             for res in detalles_resultados[-5:]:
@@ -209,18 +204,18 @@ def auditar_rendimiento_alertas():
 
 
 def auditar_cartera_personal():
-    """Aplica la gestión de riesgo del bot a tu cartera actual (AAPL, Walmart, Shopify) con manejo de datos escasos."""
-    mis_activos = ["AAPL.BA", "WMT.BA", "SHOP.BA"]
+    """Aplica la gestión de riesgo en dólares a tu cartera actual (AAPL, WMT, SHOP)."""
+    mis_activos = ["AAPL", "WMT", "SHOP"]
     
     print("\n" + "=" * 95)
-    print("🛡️ GESTIÓN DE RIESGO BLINDADA PARA TU CARTERA ACTUAL (STOP LOSS / TAKE PROFIT)")
+    print("🛡️ GESTIÓN DE RIESGO BLINDADA EN DÓLARES PARA TU CARTERA (AAPL, WMT, SHOP)")
     print("=" * 95)
 
     for simbolo in mis_activos:
         try:
             df = yf.download(simbolo, period="1y", interval="1d", progress=False)
             if df.empty:
-                print(f"\n🔹 Activo: {simbolo} -> ⚠️ No se pudieron obtener datos de yfinance.")
+                print(f"\n🔹 Activo: {simbolo} -> ⚠️ No se pudieron obtener datos en dólares.")
                 continue
 
             if isinstance(df.columns, pd.MultiIndex):
@@ -232,17 +227,15 @@ def auditar_cartera_personal():
             ultimo = df.iloc[-1]
             precio_actual = float(ultimo["Close"])
             ema_20 = float(ultimo["EMA_20"])
-            
-            # Blindaje por si el activo tiene menos de 60 ruedas de historia
             soporte_60d = float(ultimo["Soporte_60d"]) if not pd.isna(ultimo["Soporte_60d"]) else float(df["Low"].min())
 
             stop_loss = round(soporte_60d * 0.99, 2)
             take_profit = round(ema_20, 2)
 
-            print(f"\n🔹 Activo: {simbolo}")
-            print(f"   • Precio de Mercado:         ${precio_actual:>8.2f}")
-            print(f"   • 🛑 Stop Loss (Estructural):  ${stop_loss:>8.2f}  ---> ¡Línea roja inquebrantable del sistema!")
-            print(f"   • 🎯 Take Profit (EMA 20):     ${take_profit:>8.2f}  ---> ¡Objetivo técnico de salida!")
+            print(f"\n🔹 Activo: {simbolo} (USD)")
+            print(f"   • Precio de Mercado (USD):    ${precio_actual:>8.2f}")
+            print(f"   • 🛑 Stop Loss Estructural:   ${stop_loss:>8.2f}  ---> ¡Línea roja inquebrantable!")
+            print(f"   • 🎯 Take Profit (EMA 20):    ${take_profit:>8.2f}  ---> ¡Objetivo técnico de salida!")
         except Exception as e:
             print(f"\n🔹 Activo: {simbolo} -> ⚠️ Error procesando datos: {e}")
             
@@ -251,7 +244,7 @@ def auditar_cartera_personal():
 
 def verificar_alertas():
     verificar_mercado_general()
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos con blindaje institucional...")
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos en DÓLARES...")
 
     resultados_analisis = []
     nuevas_oportunidades = []
@@ -266,19 +259,17 @@ def verificar_alertas():
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
 
-            # Filtro de liquidez optimizado (volumen mínimo de 300 ruedas)
             volumen_promedio_20 = df["Volume"].rolling(window=20).mean().iloc[-1]
             if pd.isna(volumen_promedio_20) or volumen_promedio_20 < 300:
                 continue
 
-            # --- INDICADORES TÉCNICOS ---
+            # --- INDICADORES TÉCNICOS EN DÓLARES ---
             df["EMA_200"] = df["Close"].ewm(span=200, adjust=False).mean()
             df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()
             df["SMA_20"] = df["Close"].rolling(window=20).mean()
             df["STD_20"] = df["Close"].rolling(window=20).std()
             df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
 
-            # Soporte estructural de mediano plazo (Mínimo de las últimas 60 ruedas)
             df["Soporte_60d"] = df["Low"].rolling(window=60).min()
 
             delta = df["Close"].diff()
@@ -329,14 +320,12 @@ def verificar_alertas():
                 "puntuacion": puntuacion_cercania,
             })
 
-            # Disparo preliminar de alerta base
             if tendencia_alcista and precio_actual <= banda_inf and stoch_rsi < 25 and volumen_exhausto:
                 _, _, dias_para_earnings = extraer_datos_fundamentales(simbolo)
                 
-                # REGLA BLINDADA ANTI-EARNINGS: Si hay balance en los próximos 7 días, se descarta la alerta
                 if dias_para_earnings >= 7:
-                    stop_loss = round(soporte_60d * 0.99, 2)  # 1% debajo del soporte estructural
-                    take_profit = round(ema_20, 2)            # Objetivo inicial en la media móvil de 20 ruedas
+                    stop_loss = round(soporte_60d * 0.99, 2)
+                    take_profit = round(ema_20, 2)
 
                     registro = {
                         "Fecha_Hora": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -347,7 +336,7 @@ def verificar_alertas():
                         "Banda_Inferior": round(banda_inf, 2),
                         "Soporte_60d": round(soporte_60d, 2),
                         "Stoch_RSI_7": round(stoch_rsi, 2),
-                        "Estrategia": "Pullback Blindado (Bollinger + StochRSI + Stop Loss Estructural)",
+                        "Estrategia": "Pullback Blindado USD (Bollinger + StochRSI + SL)",
                     }
                     nuevas_oportunidades.append(registro)
 
@@ -358,7 +347,7 @@ def verificar_alertas():
     top_10 = resultados_analisis[:10]
 
     print("\n" + "=" * 95)
-    print(" TOP 10 RANKING DE CERCANÍA + GESTIÓN DE RIESGO (STOP LOSS / TAKE PROFIT) & FUNDAMENTALES")
+    print(" TOP 10 RANKING EN DÓLARES + GESTIÓN DE RIESGO & FUNDAMENTALES")
     print("=" * 95)
 
     for i, res in enumerate(top_10, 1):
@@ -370,13 +359,13 @@ def verificar_alertas():
         tp_sugerido = round(res["ema_20"], 2)
 
         if res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25 and res["volumen_exhausto"]:
-            estado_alerta = " 🎯 ¡OPORTUNIDAD IDEAL BLINDADA!"
+            estado_alerta = " 🎯 ¡OPORTUNIDAD IDEAL BLINDADA (USD)!"
         elif res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25:
             estado_alerta = " ⚠️ Cerca, Vol Alto"
         elif not res["tendencia_alcista"]:
             estado_alerta = " ⚠️ Tendencia Bajista"
 
-        print(f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f}"
+        print(f"\n{i:2d}. [{res['simbolo']} (USD)] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f}"
               f"\n    🛑 Stop Loss Sugerido: ${sl_sugerido:>8.2f} | 🎯 Take Profit Sugerido: ${tp_sugerido:>8.2f}"
               f"\n    StochRSI(7): {res['stoch_rsi']:>5.1f} | Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}{tag_soporte}")
 
@@ -397,13 +386,14 @@ def verificar_alertas():
             df_nuevos.to_csv(ARCHIVO_LOG, mode="a", header=False, index=False)
         else:
             df_nuevos.to_csv(ARCHIVO_LOG, index=False)
-        print(f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas blindadas con Stop Loss en '{ARCHIVO_LOG}'.")
+        print(f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas en dólares en '{ARCHIVO_LOG}'.")
     else:
-        print("\n[INFO] Ningún activo cumplió todos los filtros estrictos y de seguridad en este ciclo.")
+        print("\n[INFO] Ningún activo cumplió todos los filtros estrictos en dólares en este ciclo.")
 
     auditar_rendimiento_alertas()
     auditar_cartera_personal()
 
 
 if __name__ == "__main__":
+    verificar_mercado_general()
     verificar_alertas()

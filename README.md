@@ -33,7 +33,7 @@ pip install pandas yfinance
 5. Ejecutar el bot
 Una vez instalado, escribí el siguiente comando y apretá Enter para ponerlo a correr:
 
-Bash
+
 python main.py
 ¡Listo! El bot analizará el mercado en segundos y te mostrará el ranking de oportunidades directamente en tu pantalla.
 

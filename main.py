@@ -5,7 +5,7 @@ import yfinance as yf
 import contextlib
 import io
 
-# Universo ampliado de CEDEARs, ETFs y Cripto-activos (ahora mapeados a su ticker base en dólares)
+# Universo optimizado y depurado de CEDEARs, ETFs y Cripto-activos en Dólares (Wall Street)
 ACTIVOS = [
     "SPY", "QQQ", "DIA", "IWM", "ARKK", "IBIT", "ETHA",
     "IEUR", "EFA", "VXX", "XLY", "XLB", "XME", "IJH",
@@ -23,11 +23,11 @@ ACTIVOS = [
     "KO", "PEP", "WMT", "MCD", "NKE", "PG", "DIS",
     "TGT", "ABEV", "ARCO", "JNJ", "PFE", "MRNA", "ABBV",
     "AMGN", "ABT", "XOM", "CVX", "VALE", "RIO", "KGC",
-    "MUX", "PKS", "SID", "CAT", "DE", "GE", "TM", "F",
-    "LMT", "RTX", "EMBJ", "NOKA", "CSCO", "MDT", "SPGI",
-    "ADGO", "GLOB", "DECK", "SYY", "XROX", "AAP", "SONY",
+    "MUX", "SID", "CAT", "DE", "GE", "TM", "F",
+    "LMT", "RTX", "EMBJ", "CSCO", "MDT", "SPGI",
+    "GLOB", "DECK", "SYY", "AAP", "SONY",
     "CAR", "NUE", "MSI", "JD", "UPST", "MO", "ADI",
-    "OXY", "TMUS", "TSM", "BABA", "T", "MU", "V", "TXR",
+    "OXY", "TMUS", "TSM", "BABA", "T", "MU", "V",
     "LAC", "LLY", "AMAT", "SATL", "CLS", "RBLX", "CCL"
 ]
 

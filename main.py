@@ -197,12 +197,10 @@ def analizar_sentimiento_noticia(titulo):
     """Clasifica de forma rápida y eficiente el sentimiento de una noticia financiera."""
     titulo_lower = titulo.lower()
 
-    # Palabras clave asociadas a un contexto positivo o alcista
     palabras_positivas = [
         "best", "buy", "growth", "rebound", "gain", "up", "bull", "boost",
         "high", "upgrade", "profit", "beat", "positive", "strong", "surge"
     ]
-    # Palabras clave asociadas a un contexto negativo o bajista
     palabras_negativas = [
         "down", "fall", "slip", "drop", "blacklist", "bear", "loss", "miss",
         "inflation", "war", "risk", "cut", "warning", "crash", "negative"
@@ -254,10 +252,90 @@ def extraer_datos_fundamentales(simbolo_ba):
             elif isinstance(cal, pd.DataFrame) and not cal.empty:
                 proximo_earnings = str(cal.index[0]).split("T")[0]
     except Exception:
-        # Silencia errores 404 en endpoints de fundamentales para ETFs
         pass
 
     return noticias_con_sentimiento, proximo_earnings
+
+
+def auditar_rendimiento_alertas():
+    """Audita el Win Rate histórico de las alertas guardadas en el CSV a un horizonte de 5 ruedas."""
+    if not os.path.exists(ARCHIVO_LOG):
+        print("\n📊 [AUDITORÍA DE WIN RATE] No hay historial de alertas previo ('oportunidades.csv').")
+        return
+
+    try:
+        df_log = pd.read_csv(ARCHIVO_LOG)
+        if df_log.empty or "Fecha_Hora" not in df_log.columns or "Activo" not in df_log.columns:
+            return
+
+        print("\n" + "=" * 95)
+        print("📊 AUDITORÍA HISTÓRICA DE SEÑALES (WIN RATE A 5 RUEDAS)")
+        print("=" * 95)
+
+        total_alertas = len(df_log)
+        exitos = 0
+        evaluadas = 0
+        detalles_resultados = []
+
+        for _, row in df_log.iterrows():
+            simbolo = row["Activo"]
+            precio_entrada = float(row["Precio"])
+            
+            try:
+                fecha_str = str(row["Fecha_Hora"]).split(" ")[0]
+            except Exception:
+                continue
+
+            # Descargar historial desde la fecha de la alerta hasta la fecha actual
+            hoy = datetime.now().strftime("%Y-%m-%d")
+            df_hist = yf.download(simbolo, start=fecha_str, end=hoy, progress=False)
+
+            if df_hist.empty or len(df_hist) <= 1:
+                continue
+
+            if isinstance(df_hist.columns, pd.MultiIndex):
+                df_hist.columns = df_hist.columns.get_level_values(0)
+
+            # Tomar hasta las 5 ruedas posteriores a la alerta
+            df_futuro = df_hist.iloc[1:6]
+            if df_futuro.empty:
+                continue
+
+            evaluadas += 1
+            precio_max_futuro = float(df_futuro["High"].max())
+            rendimiento_max = ((precio_max_futuro - precio_entrada) / precio_entrada) * 100
+            
+            if precio_max_futuro > precio_entrada:
+                exitos += 1
+                estado = "✅ WIN"
+            else:
+                estado = "❌ LOSS"
+
+            detalles_resultados.append({
+                "Fecha": fecha_str,
+                "Activo": simbolo,
+                "Entrada": precio_entrada,
+                "Max_Alcanzado": precio_max_futuro,
+                "Retorno_Max": rendimiento_max,
+                "Estado": estado
+            })
+
+        if evaluadas > 0:
+            win_rate = (exitos / evaluadas) * 100
+            print(f"🔹 Total de Alertas Registradas en Historial: {total_alertas}")
+            print(f"🔹 Alertas Evaluables (+5 ruedas transcurridas): {evaluadas}")
+            print(f"🔹 Operaciones Exitosas (Win): {exitos}")
+            print(f"🎯 WIN RATE GLOBAL DE LA ESTRATEGIA: {win_rate:.2f}%\n")
+            
+            print("📋 Detalle de las últimas alertas auditadas:")
+            for res in detalles_resultados[-5:]:
+                print(f"   • [{res['Fecha']}] {res['Activo']} | Entrada: ${res['Entrada']:>8.2f} | Máx post: ${res['Max_Alcanzado']:>8.2f} | Retorno: {res['Retorno_Max']:>+.2f}% | {res['Estado']}")
+        else:
+            print("ℹ️ [INFO] Las alertas registradas son muy recientes y aún no completaron el ciclo de 5 ruedas para evaluar.")
+        print("=" * 95)
+
+    except Exception as e:
+        print(f"No se pudo completar la auditoría de rendimiento: {e}")
 
 
 def verificar_alertas():
@@ -405,6 +483,9 @@ def verificar_alertas():
         )
     else:
         print("\n[INFO] Ningún activo cumplió todos los filtros estrictos en este ciclo.")
+
+    # Ejecutar la auditoría histórica de Win Rate al finalizar el escaneo
+    auditar_rendimiento_alertas()
 
 
 if __name__ == "__main__":

@@ -208,6 +208,47 @@ def auditar_rendimiento_alertas():
         print(f"No se pudo completar la auditoría de rendimiento: {e}")
 
 
+def auditar_cartera_personal():
+    """Aplica la gestión de riesgo del bot a tu cartera actual (AAPL, Walmart, Shopify) con manejo de datos escasos."""
+    mis_activos = ["AAPL.BA", "WMT.BA", "SHOP.BA"]
+    
+    print("\n" + "=" * 95)
+    print("🛡️ GESTIÓN DE RIESGO BLINDADA PARA TU CARTERA ACTUAL (STOP LOSS / TAKE PROFIT)")
+    print("=" * 95)
+
+    for simbolo in mis_activos:
+        try:
+            df = yf.download(simbolo, period="1y", interval="1d", progress=False)
+            if df.empty:
+                print(f"\n🔹 Activo: {simbolo} -> ⚠️ No se pudieron obtener datos de yfinance.")
+                continue
+
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+
+            df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()
+            df["Soporte_60d"] = df["Low"].rolling(window=60).min()
+
+            ultimo = df.iloc[-1]
+            precio_actual = float(ultimo["Close"])
+            ema_20 = float(ultimo["EMA_20"])
+            
+            # Blindaje por si el activo tiene menos de 60 ruedas de historia
+            soporte_60d = float(ultimo["Soporte_60d"]) if not pd.isna(ultimo["Soporte_60d"]) else float(df["Low"].min())
+
+            stop_loss = round(soporte_60d * 0.99, 2)
+            take_profit = round(ema_20, 2)
+
+            print(f"\n🔹 Activo: {simbolo}")
+            print(f"   • Precio de Mercado:         ${precio_actual:>8.2f}")
+            print(f"   • 🛑 Stop Loss (Estructural):  ${stop_loss:>8.2f}  ---> ¡Línea roja inquebrantable del sistema!")
+            print(f"   • 🎯 Take Profit (EMA 20):     ${take_profit:>8.2f}  ---> ¡Objetivo técnico de salida!")
+        except Exception as e:
+            print(f"\n🔹 Activo: {simbolo} -> ⚠️ Error procesando datos: {e}")
+            
+    print("=" * 95)
+
+
 def verificar_alertas():
     verificar_mercado_general()
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos con blindaje institucional...")
@@ -290,12 +331,10 @@ def verificar_alertas():
 
             # Disparo preliminar de alerta base
             if tendencia_alcista and precio_actual <= banda_inf and stoch_rsi < 25 and volumen_exhausto:
-                # Consultar fundamentales y earnings para validación final antes de registrar
                 _, _, dias_para_earnings = extraer_datos_fundamentales(simbolo)
                 
                 # REGLA BLINDADA ANTI-EARNINGS: Si hay balance en los próximos 7 días, se descarta la alerta
                 if dias_para_earnings >= 7:
-                    # Cálculo matemático de Stop Loss y Take Profit
                     stop_loss = round(soporte_60d * 0.99, 2)  # 1% debajo del soporte estructural
                     take_profit = round(ema_20, 2)            # Objetivo inicial en la media móvil de 20 ruedas
 
@@ -327,7 +366,6 @@ def verificar_alertas():
         vol_tag = "📊 Vol. Normal" if not res["volumen_exhausto"] else "📉 Vol. Exhausto (Ideal)"
         tag_soporte = " 🛡️ [Soporte 60d OK]" if res["cumple_soporte"] else ""
 
-        # Cálculo referencial de SL/TP para visualización en el Top 10
         sl_sugerido = round(res["soporte_60d"] * 0.99, 2)
         tp_sugerido = round(res["ema_20"], 2)
 
@@ -348,7 +386,7 @@ def verificar_alertas():
         print(f"       📅 Próximo Balance: {proximo_earnings}{aviso_earn}")
         print("       📰 Últimas Noticias y Sentimiento:")
         for titulo, sentimiento in noticias:
-            print(f"          • {sentimiento} {titulo}")
+            print(f"         • {sentimiento} {titulo}")
         print("-" * 95)
 
     print("=" * 95)
@@ -364,6 +402,7 @@ def verificar_alertas():
         print("\n[INFO] Ningún activo cumplió todos los filtros estrictos y de seguridad en este ciclo.")
 
     auditar_rendimiento_alertas()
+    auditar_cartera_personal()
 
 
 if __name__ == "__main__":

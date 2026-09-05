@@ -40,7 +40,8 @@ Un bot cuantitativo automatizado desarrollado en Python para la detección y pri
 1. Clonar el repositorio:
 
    git clone [https://github.com/Arox13iq/cedear-swing-bot.git](https://github.com/Arox13iq/cedear-swing-bot.git)
-   cd cedear-swing-bot
+
+    cd cedear-swing-bot
 Crear y activar un entorno virtual:
 
 

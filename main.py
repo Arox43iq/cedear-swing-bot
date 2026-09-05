@@ -2,166 +2,33 @@ from datetime import datetime
 import os
 import pandas as pd
 import yfinance as yf
+import contextlib
+import io
 
 # Universo ampliado de CEDEARs, ETFs y Cripto-activos funcionales en BYMA (Cocos)
 ACTIVOS = [
-    "SPY.BA",
-    "QQQ.BA",
-    "DIA.BA",
-    "IWM.BA",
-    "ARKK.BA",
-    "IBIT.BA",
-    "ETHA.BA",
-    "IEUR.BA",
-    "EFA.BA",
-    "VXX.BA",
-    "XLY.BA",
-    "XLB.BA",
-    "XME.BA",
-    "IJH.BA",
-    "ICLN.BA",
-    "ESGU.BA",
-    "IVW.BA",
-    "SPHQ.BA",
-    "ACWI.BA",
-    "IVE.BA",
-    "CIBR.BA",
-    "XLC.BA",
-    "XLRE.BA",
-    "IEMG.BA",
-    "ILF.BA",
-    "IBB.BA",
-    "EWJ.BA",
-    "ITA.BA",
-    "URA.BA",
-    "XLI.BA",
-    "RSP.BA",
-    "VEA.BA",
-    "XLV.BA",
-    "USO.BA",
-    "SPXL.BA",
-    "PSQ.BA",
-    "XLK.BA",
-    "VIG.BA",
-    "FXI.BA",
-    "IVV.BA",
-    "EWZ.BA",
-    "GLD.BA",
-    "SLV.BA",
-    "COPX.BA",
-    "SMH.BA",
-    "GDX.BA",
-    "XLE.BA",
-    "XLP.BA",
-    "EEM.BA",
-    "XLF.BA",
-    "XLU.BA",
-    "TQQQ.BA",
-    "EWY.BA",
-    "SH.BA",
-    "MSTR.BA",
-    "HUT.BA",
-    "COIN.BA",
-    "KEEL.BA",
-    "RIOT.BA",
-    "AAPL.BA",
-    "MSFT.BA",
-    "MELI.BA",
-    "GOOGL.BA",
-    "NVDA.BA",
-    "AMZN.BA",
-    "TSLA.BA",
-    "NFLX.BA",
-    "AMD.BA",
-    "INTC.BA",
-    "QCOM.BA",
-    "IBM.BA",
-    "ORCL.BA",
-    "ADBE.BA",
-    "CRM.BA",
-    "PYPL.BA",
-    "UBER.BA",
-    "ABNB.BA",
-    "ASML.BA",
-    "PLTR.BA",
-    "MRVL.BA",
-    "SPOT.BA",
-    "EBAY.BA",
-    "PANW.BA",
-    "BRKB.BA",
-    "JPM.BA",
-    "C.BA",
-    "GS.BA",
-    "WFC.BA",
-    "AXP.BA",
-    "NU.BA",
-    "STNE.BA",
-    "BBD.BA",
-    "KO.BA",
-    "PEP.BA",
-    "WMT.BA",
-    "MCD.BA",
-    "NKE.BA",
-    "PG.BA",
-    "DISN.BA",
-    "TGT.BA",
-    "ABEV.BA",
-    "ARCO.BA",
-    "JNJ.BA",
-    "PFE.BA",
-    "MRNA.BA",
-    "ABBV.BA",
-    "AMGN.BA",
-    "ABT.BA",
-    "XOM.BA",
-    "CVX.BA",
-    "VALE.BA",
-    "RIO.BA",
-    "KGC.BA",
-    "MUX.BA",
-    "PKS.BA",
-    "SID.BA",
-    "CAT.BA",
-    "DE.BA",
-    "GE.BA",
-    "TM.BA",
-    "F.BA",
-    "LMT.BA",
-    "RTX.BA",
-    "EMBJ.BA",
-    "NOKA.BA",
-    "CSCO.BA",
-    "MDT.BA",
-    "SPGI.BA",
-    "ADGO.BA",
-    "GLOB.BA",
-    "DECK.BA",
-    "SYY.BA",
-    "XROX.BA",
-    "AAP.BA",
-    "SONY.BA",
-    "CAR.BA",
-    "NUE.BA",
-    "MSI.BA",
-    "JD.BA",
-    "UPST.BA",
-    "MO.BA",
-    "ADI.BA",
-    "OXY.BA",
-    "TMUS.BA",
-    "TSM.BA",
-    "BABA.BA",
-    "T.BA",
-    "MU.BA",
-    "V.BA",
-    "TXR.BA",
-    "LAC.BA",
-    "LLY.BA",
-    "AMAT.BA",
-    "SATL.BA",
-    "CLS.BA",
-    "RBLX.BA",
-    "CCL.BA",
+    "SPY.BA", "QQQ.BA", "DIA.BA", "IWM.BA", "ARKK.BA", "IBIT.BA", "ETHA.BA",
+    "IEUR.BA", "EFA.BA", "VXX.BA", "XLY.BA", "XLB.BA", "XME.BA", "IJH.BA",
+    "ICLN.BA", "ESGU.BA", "IVW.BA", "SPHQ.BA", "ACWI.BA", "IVE.BA", "CIBR.BA",
+    "XLC.BA", "XLRE.BA", "IEMG.BA", "ILF.BA", "IBB.BA", "EWJ.BA", "ITA.BA",
+    "URA.BA", "XLI.BA", "RSP.BA", "VEA.BA", "XLV.BA", "USO.BA", "SPXL.BA",
+    "PSQ.BA", "XLK.BA", "VIG.BA", "FXI.BA", "IVV.BA", "EWZ.BA", "GLD.BA",
+    "SLV.BA", "COPX.BA", "SMH.BA", "GDX.BA", "XLE.BA", "XLP.BA", "EEM.BA",
+    "XLF.BA", "XLU.BA", "TQQQ.BA", "EWY.BA", "SH.BA", "MSTR.BA", "HUT.BA",
+    "COIN.BA", "KEEL.BA", "RIOT.BA", "AAPL.BA", "MSFT.BA", "MELI.BA", "GOOGL.BA",
+    "NVDA.BA", "AMZN.BA", "TSLA.BA", "NFLX.BA", "AMD.BA", "INTC.BA", "QCOM.BA",
+    "IBM.BA", "ORCL.BA", "ADBE.BA", "CRM.BA", "PYPL.BA", "UBER.BA", "ABNB.BA",
+    "ASML.BA", "PLTR.BA", "MRVL.BA", "SPOT.BA", "EBAY.BA", "PANW.BA", "BRKB.BA",
+    "JPM.BA", "C.BA", "GS.BA", "WFC.BA", "AXP.BA", "NU.BA", "STNE.BA", "BBD.BA",
+    "KO.BA", "PEP.BA", "WMT.BA", "MCD.BA", "NKE.BA", "PG.BA", "DISN.BA",
+    "TGT.BA", "ABEV.BA", "ARCO.BA", "JNJ.BA", "PFE.BA", "MRNA.BA", "ABBV.BA",
+    "AMGN.BA", "ABT.BA", "XOM.BA", "CVX.BA", "VALE.BA", "RIO.BA", "KGC.BA",
+    "MUX.BA", "PKS.BA", "SID.BA", "CAT.BA", "DE.BA", "GE.BA", "TM.BA", "F.BA",
+    "LMT.BA", "RTX.BA", "EMBJ.BA", "NOKA.BA", "CSCO.BA", "MDT.BA", "SPGI.BA",
+    "ADGO.BA", "GLOB.BA", "DECK.BA", "SYY.BA", "XROX.BA", "AAP.BA", "SONY.BA",
+    "CAR.BA", "NUE.BA", "MSI.BA", "JD.BA", "UPST.BA", "MO.BA", "ADI.BA",
+    "OXY.BA", "TMUS.BA", "TSM.BA", "BABA.BA", "T.BA", "MU.BA", "V.BA", "TXR.BA",
+    "LAC.BA", "LLY.BA", "AMAT.BA", "SATL.BA", "CLS.BA", "RBLX.BA", "CCL.BA"
 ]
 
 ACTIVOS = list(dict.fromkeys(ACTIVOS))
@@ -178,13 +45,9 @@ def verificar_mercado_general():
             df_spy["EMA_200"] = df_spy["Close"].ewm(span=200, adjust=False).mean()
             ultimo_spy = df_spy.iloc[-1]
             if ultimo_spy["Close"] < ultimo_spy["EMA_200"]:
-                print(
-                    "\n⚠️ [ALERTA MACRO] El S&P 500 (SPY.BA) está por debajo de su EMA 200. Mercado bajista general: operar rebotes con cautela extra."
-                )
+                print("\n⚠️ [ALERTA MACRO] El S&P 500 (SPY.BA) está por debajo de su EMA 200. Mercado bajista general: operar rebotes con cautela extra.")
             else:
-                print(
-                    "\n✅ [ESTADO MACRO] El S&P 500 (SPY.BA) está alcista (Precio > EMA 200). Entorno favorable para rebotes."
-                )
+                print("\n✅ [ESTADO MACRO] El S&P 500 (SPY.BA) está alcista (Precio > EMA 200). Entorno favorable para rebotes.")
     except Exception as e:
         print(f"No se pudo verificar el contexto de mercado general: {e}")
 
@@ -223,13 +86,16 @@ def analizar_sentimiento_noticia(titulo):
 
 
 def extraer_datos_fundamentales(simbolo_ba):
-    """Extrae noticias, calcula sentimiento y obtiene próximos earnings manejando excepciones de ETFs."""
+    """Extrae noticias, calcula sentimiento y obtiene próximos earnings silenciando errores 404 de ETFs."""
     ticker_original = obtener_ticker_original(simbolo_ba)
     ticker_yf = yf.Ticker(ticker_original)
     
     noticias_con_sentimiento = []
     try:
-        news = ticker_yf.news
+        # Se silencian los posibles mensajes de error internos de yfinance
+        with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            news = ticker_yf.news
+            
         if news:
             for item in news[:2]:
                 titulo = item.get("title") or item.get("content", {}).get("title", "Sin título")
@@ -243,7 +109,10 @@ def extraer_datos_fundamentales(simbolo_ba):
 
     proximo_earnings = "No disponible (ETF o N/D)"
     try:
-        cal = ticker_yf.calendar
+        # Se silencian los mensajes de error 404 para los ETFs
+        with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            cal = ticker_yf.calendar
+            
         if cal is not None:
             if isinstance(cal, dict) and "Earnings Date" in cal:
                 edates = cal["Earnings Date"]
@@ -264,7 +133,6 @@ def auditar_rendimiento_alertas():
         return
 
     try:
-        # Agregamos on_bad_lines='skip' para evitar errores si el CSV tiene formatos viejos
         df_log = pd.read_csv(ARCHIVO_LOG, on_bad_lines='skip')
         if df_log.empty or "Fecha_Hora" not in df_log.columns or "Activo" not in df_log.columns:
             return
@@ -278,6 +146,8 @@ def auditar_rendimiento_alertas():
         evaluadas = 0
         detalles_resultados = []
 
+        hoy = datetime.now().strftime("%Y-%m-%d")
+
         for _, row in df_log.iterrows():
             simbolo = row["Activo"]
             precio_entrada = float(row["Precio"])
@@ -287,8 +157,10 @@ def auditar_rendimiento_alertas():
             except Exception:
                 continue
 
-            # Descargar historial desde la fecha de la alerta hasta la fecha actual
-            hoy = datetime.now().strftime("%Y-%m-%d")
+            # Filtro para evitar errores con alertas de hoy (no tienen historial futuro)
+            if fecha_str == hoy:
+                continue
+
             df_hist = yf.download(simbolo, start=fecha_str, end=hoy, progress=False)
 
             if df_hist.empty or len(df_hist) <= 1:
@@ -297,7 +169,6 @@ def auditar_rendimiento_alertas():
             if isinstance(df_hist.columns, pd.MultiIndex):
                 df_hist.columns = df_hist.columns.get_level_values(0)
 
-            # Tomar hasta las 5 ruedas posteriores a la alerta
             df_futuro = df_hist.iloc[1:6]
             if df_futuro.empty:
                 continue
@@ -341,9 +212,7 @@ def auditar_rendimiento_alertas():
 
 def verificar_alertas():
     verificar_mercado_general()
-    print(
-        f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos..."
-    )
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos...")
 
     resultados_analisis = []
     nuevas_oportunidades = []
@@ -413,12 +282,7 @@ def verificar_alertas():
                 "puntuacion": puntuacion_cercania,
             })
 
-            if (
-                tendencia_alcista
-                and precio_actual <= banda_inf
-                and stoch_rsi < 25
-                and volumen_exhausto
-            ):
+            if tendencia_alcista and precio_actual <= banda_inf and stoch_rsi < 25 and volumen_exhausto:
                 registro = {
                     "Fecha_Hora": datetime.now().strftime("%Y-%m-%d %H:%M"),
                     "Activo": simbolo,
@@ -446,22 +310,15 @@ def verificar_alertas():
         estado_alerta = " "
         vol_tag = "📊 Vol. Normal" if not res["volumen_exhausto"] else "📉 Vol. Exhausto (Ideal)"
 
-        if (
-            res["tendencia_alcista"]
-            and res["precio"] <= res["banda_inf"]
-            and res["stoch_rsi"] < 25
-            and res["volumen_exhausto"]
-        ):
+        if res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25 and res["volumen_exhausto"]:
             estado_alerta = " 🎯 ¡OPORTUNIDAD IDEAL!"
         elif res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25:
             estado_alerta = " ⚠️ Cerca, Vol Alto"
         elif not res["tendencia_alcista"]:
             estado_alerta = " ⚠️ Tendencia Bajista"
 
-        print(
-            f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f}"
-            f"\n    StochRSI(7): {res['stoch_rsi']:>5.1f} | Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}"
-        )
+        print(f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f}"
+              f"\n    StochRSI(7): {res['stoch_rsi']:>5.1f} | Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}")
 
         print("    🔍 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")
         noticias, proximo_earnings = extraer_datos_fundamentales(res["simbolo"])
@@ -479,13 +336,10 @@ def verificar_alertas():
             df_nuevos.to_csv(ARCHIVO_LOG, mode="a", header=False, index=False)
         else:
             df_nuevos.to_csv(ARCHIVO_LOG, index=False)
-        print(
-            f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas de alta calidad en '{ARCHIVO_LOG}'."
-        )
+        print(f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas de alta calidad en '{ARCHIVO_LOG}'.")
     else:
         print("\n[INFO] Ningún activo cumplió todos los filtros estrictos en este ciclo.")
 
-    # Ejecutar la auditoría histórica de Win Rate al finalizar el escaneo
     auditar_rendimiento_alertas()
 
 

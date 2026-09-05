@@ -5,177 +5,166 @@ import yfinance as yf
 
 # Universo ampliado de CEDEARs, ETFs y Cripto-activos funcionales en BYMA (Cocos)
 ACTIVOS = [
-    # --- ETFs Globales, Índices y Cripto previos ---
-    "SPY.BA",  # S&P 500
-    "QQQ.BA",  # Nasdaq 100
-    "DIA.BA",  # Dow Jones
-    "IWM.BA",  # Russell 2000 (Small Caps)
-    "ARKK.BA",  # Ark Innovation
-    "IBIT.BA",  # iShares Bitcoin Trust ETF
-    "ETHA.BA",  # iShares Ethereum Trust ETF
-    # --- Nuevos ETFs y Activos de las capturas (Región, Sectores, Commodities y Otros) ---
-    "IEUR.BA",  # Europe ETF
-    "EFA.BA",   # iShares MSCI EAFE ETF
-    "VXX.BA",   # iPath Series B S&P 500 VIX
-    "XLY.BA",   # S&P 500 Consumer Discretionary ETF
-    "XLB.BA",   # S&P 500 Materials ETF
-    "XME.BA",   # State Street SPDR S&P Metals & Mining
-    "IJH.BA",   # iShares Core S&P Mid-Cap ETF
-    "ICLN.BA",  # iShares Global Clean Energy
-    "ESGU.BA",  # iShares ESG Aware MSCI USA ETF
-    "IVW.BA",   # S&P 500 Growth ETF
-    "SPHQ.BA",  # Invesco S&P 500 Quality ETF
-    "ACWI.BA",  # iShares MSCI ACWI ETF
-    "IVE.BA",   # S&P 500 Value ETF
-    "CIBR.BA",  # First Trust NASDAQ Cybersecurity ETF
-    "XLC.BA",   # S&P 500 Communication ETF
-    "XLRE.BA",  # State Street Real Estate Select Sector
-    "IEMG.BA",  # iShares Core MSCI Emerging Markets ETF
-    "ILF.BA",   # iShares Latin America 40 ETF
-    "IBB.BA",   # Nasdaq Biotechnology ETF
-    "EWJ.BA",   # iShares MSCI Japan ETF
-    "ITA.BA",   # iShares US Aerospace & Defense ETF
-    "URA.BA",   # Global X Uranium ETF
-    "XLI.BA",   # S&P 500 Industrial ETF
-    "RSP.BA",   # Invesco S&P 500 Equal Weight
-    "VEA.BA",   # Developed Markets ETF
-    "XLV.BA",   # S&P 500 Health Care ETF
-    "USO.BA",   # United States Oil Fund
-    "SPXL.BA",  # Direxion Daily S&P 500 Bull 3X
-    "PSQ.BA",   # Proshares Short QQQ ETF
-    "XLK.BA",   # S&P 500 TECH ETF
-    "VIG.BA",   # Vanguard Dividend Appreciation ETF
-    "FXI.BA",   # ETF China Large-Cap
-    "IVV.BA",   # iShares Core S&P 500 ETF
-    "EWZ.BA",   # iShares MSCI Brazil ETF
-    "GLD.BA",   # SPDR Gold Shares ETF
-    "SLV.BA",   # iShares Silver Trust
-    "COPX.BA",  # Global X Copper Miners ETF
-    "SMH.BA",   # VanEck Semiconductor ETF
-    "GDX.BA",   # VanEck Gold Miners ETF
-    "XLE.BA",   # State Street Energy Select Sector SPDR
-    "XLP.BA",   # S&P 500 Consumer ETF
-    "EEM.BA",   # MSCI Emerging Markets
-    "XLF.BA",   # Financial SPDR
-    "XLU.BA",   # Utilities Select Sector SPDR Fund ETF
-    "TQQQ.BA",  # ProShares UltraPro QQQ
-    "EWY.BA",   # iShares MSCI South Korea
-    "SH.BA",    # Short S&P 500
-    # --- Acciones Sector Cripto / Minería / Blockchain ---
-    "MSTR.BA",  # MicroStrategy
-    "HUT.BA",   # Hut 8 Mining
-    "COIN.BA",  # Coinbase
-    "KEEL.BA",  # Keel Infrastructure / Bitfarms
-    "RIOT.BA",  # Riot Platforms
-    # --- Gigantes Tecnológicos / Crecimiento ---
-    "AAPL.BA",  # Apple
-    "MSFT.BA",  # Microsoft
-    "MELI.BA",  # Mercado Libre
-    "GOOGL.BA",  # Google (Alphabet)
-    "NVDA.BA",  # Nvidia
-    "AMZN.BA",  # Amazon
-    "TSLA.BA",  # Tesla
-    "NFLX.BA",  # Netflix
-    "AMD.BA",   # AMD
-    "INTC.BA",  # Intel
-    "QCOM.BA",  # Qualcomm
-    "IBM.BA",   # IBM
-    "ORCL.BA",  # Oracle
-    "ADBE.BA",  # Adobe
-    "CRM.BA",   # Salesforce
-    "PYPL.BA",  # PayPal
-    "UBER.BA",  # Uber
-    "ABNB.BA",  # Airbnb
-    "ASML.BA",  # ASML Holding
-    "PLTR.BA",  # Palantir Technologies
-    "MRVL.BA",  # Marvell Technology
-    "SPOT.BA",  # Spotify
-    "EBAY.BA",  # Ebay
-    "PANW.BA",  # Palo Alto Networks
-    # --- Sector Financiero y Conglomerados ---
-    "BRKB.BA",  # Berkshire Hathaway
-    "JPM.BA",   # JPMorgan Chase
-    "C.BA",     # Citigroup
-    "GS.BA",    # Goldman Sachs
-    "WFC.BA",   # Wells Fargo
-    "AXP.BA",   # American Express
-    "NU.BA",    # Nu Bank
-    "STNE.BA",  # StoneCo
-    "BBD.BA",   # Banco Bradesco
-    # --- Consumo Masivo y Retail ---
-    "KO.BA",    # Coca-Cola
-    "PEP.BA",   # Pepsico
-    "WMT.BA",   # Walmart
-    "MCD.BA",   # McDonalds
-    "NKE.BA",   # Nike
-    "PG.BA",    # Procter & Gamble
-    "DISN.BA",  # Disney
-    "TGT.BA",   # Target
-    "ABEV.BA",  # ADR Ambev
-    "ARCO.BA",  # Arcos Dorados
-    # --- Salud y Farmacéuticas ---
-    "JNJ.BA",   # Johnson & Johnson
-    "PFE.BA",   # Pfizer
-    "MRNA.BA",  # Moderna
-    "ABBV.BA",  # AbbVie
-    "AMGN.BA",  # Amgen
-    "ABT.BA",   # Abbott
-    # --- Energía, Petróleo y Minería ---
-    "XOM.BA",   # Exxon Mobil
-    "CVX.BA",   # Chevron
-    "VALE.BA",  # Vale
-    "RIO.BA",   # Rio Tinto
-    "KGC.BA",   # Kinross Gold
-    "MUX.BA",   # McEwen
-    "PKS.BA",   # Posco
-    "SID.BA",   # Cia. Siderurgica Nacional
-    # --- Industria, Autos y Aeroespacial ---
-    "CAT.BA",   # Caterpillar
-    "DE.BA",    # Deere
-    "GE.BA",    # General Electric
-    "TM.BA",    # Toyota Motors
-    "F.BA",     # Ford
-    "LMT.BA",   # Lockheed Martin
-    "RTX.BA",   # Raytheon
-    "EMBJ.BA",  # Embraer
-    "NOKA.BA",  # Nokia
-    "CSCO.BA",  # Cisco Systems
-    "MDT.BA",   # Medtronic
-    "SPGI.BA",  # Standard & Poor's
-    "ADGO.BA",  # Adecoagro
-    "GLOB.BA",  # Globant
-    "DECK.BA",  # Deckers Outdoor Corporation
-    "SYY.BA",   # Sysco
-    "XROX.BA",  # Xerox
-    "AAP.BA",   # Advance Auto Parts
-    "SONY.BA",  # Sony
-    "CAR.BA",   # Avis Budget Group
-    "NUE.BA",   # Nucor
-    "MSI.BA",   # Motorola
-    "JD.BA",    # Jingdong (JD.com)
-    "UPST.BA",  # Upstart
-    "MO.BA",    # Altria
-    "ADI.BA",   # Analog Devices
-    "OXY.BA",   # Occidental Petroleum Corp
-    "TMUS.BA",  # T-Mobile US Inc.
-    "TSM.BA",   # Taiwan Semiconductor
-    "BABA.BA",  # Alibaba
-    "T.BA",     # AT&T
-    "MU.BA",    # Micron Technology
-    "V.BA",     # Visa
-    "TXR.BA",   # Ternium
-    "LAC.BA",   # Lithium Americas
-    "LLY.BA",   # Eli Lilly & Co
-    "AMAT.BA",  # Applied Materials
-    "SATL.BA",  # Satellogic
-    "CLS.BA",   # Celestica
-    "RBLX.BA",  # Roblox Corp
-    "CCL.BA",   # Carnival Corp
+    "SPY.BA",
+    "QQQ.BA",
+    "DIA.BA",
+    "IWM.BA",
+    "ARKK.BA",
+    "IBIT.BA",
+    "ETHA.BA",
+    "IEUR.BA",
+    "EFA.BA",
+    "VXX.BA",
+    "XLY.BA",
+    "XLB.BA",
+    "XME.BA",
+    "IJH.BA",
+    "ICLN.BA",
+    "ESGU.BA",
+    "IVW.BA",
+    "SPHQ.BA",
+    "ACWI.BA",
+    "IVE.BA",
+    "CIBR.BA",
+    "XLC.BA",
+    "XLRE.BA",
+    "IEMG.BA",
+    "ILF.BA",
+    "IBB.BA",
+    "EWJ.BA",
+    "ITA.BA",
+    "URA.BA",
+    "XLI.BA",
+    "RSP.BA",
+    "VEA.BA",
+    "XLV.BA",
+    "USO.BA",
+    "SPXL.BA",
+    "PSQ.BA",
+    "XLK.BA",
+    "VIG.BA",
+    "FXI.BA",
+    "IVV.BA",
+    "EWZ.BA",
+    "GLD.BA",
+    "SLV.BA",
+    "COPX.BA",
+    "SMH.BA",
+    "GDX.BA",
+    "XLE.BA",
+    "XLP.BA",
+    "EEM.BA",
+    "XLF.BA",
+    "XLU.BA",
+    "TQQQ.BA",
+    "EWY.BA",
+    "SH.BA",
+    "MSTR.BA",
+    "HUT.BA",
+    "COIN.BA",
+    "KEEL.BA",
+    "RIOT.BA",
+    "AAPL.BA",
+    "MSFT.BA",
+    "MELI.BA",
+    "GOOGL.BA",
+    "NVDA.BA",
+    "AMZN.BA",
+    "TSLA.BA",
+    "NFLX.BA",
+    "AMD.BA",
+    "INTC.BA",
+    "QCOM.BA",
+    "IBM.BA",
+    "ORCL.BA",
+    "ADBE.BA",
+    "CRM.BA",
+    "PYPL.BA",
+    "UBER.BA",
+    "ABNB.BA",
+    "ASML.BA",
+    "PLTR.BA",
+    "MRVL.BA",
+    "SPOT.BA",
+    "EBAY.BA",
+    "PANW.BA",
+    "BRKB.BA",
+    "JPM.BA",
+    "C.BA",
+    "GS.BA",
+    "WFC.BA",
+    "AXP.BA",
+    "NU.BA",
+    "STNE.BA",
+    "BBD.BA",
+    "KO.BA",
+    "PEP.BA",
+    "WMT.BA",
+    "MCD.BA",
+    "NKE.BA",
+    "PG.BA",
+    "DISN.BA",
+    "TGT.BA",
+    "ABEV.BA",
+    "ARCO.BA",
+    "JNJ.BA",
+    "PFE.BA",
+    "MRNA.BA",
+    "ABBV.BA",
+    "AMGN.BA",
+    "ABT.BA",
+    "XOM.BA",
+    "CVX.BA",
+    "VALE.BA",
+    "RIO.BA",
+    "KGC.BA",
+    "MUX.BA",
+    "PKS.BA",
+    "SID.BA",
+    "CAT.BA",
+    "DE.BA",
+    "GE.BA",
+    "TM.BA",
+    "F.BA",
+    "LMT.BA",
+    "RTX.BA",
+    "EMBJ.BA",
+    "NOKA.BA",
+    "CSCO.BA",
+    "MDT.BA",
+    "SPGI.BA",
+    "ADGO.BA",
+    "GLOB.BA",
+    "DECK.BA",
+    "SYY.BA",
+    "XROX.BA",
+    "AAP.BA",
+    "SONY.BA",
+    "CAR.BA",
+    "NUE.BA",
+    "MSI.BA",
+    "JD.BA",
+    "UPST.BA",
+    "MO.BA",
+    "ADI.BA",
+    "OXY.BA",
+    "TMUS.BA",
+    "TSM.BA",
+    "BABA.BA",
+    "T.BA",
+    "MU.BA",
+    "V.BA",
+    "TXR.BA",
+    "LAC.BA",
+    "LLY.BA",
+    "AMAT.BA",
+    "SATL.BA",
+    "CLS.BA",
+    "RBLX.BA",
+    "CCL.BA",
 ]
 
-# Evitar duplicados por seguridad de forma automática
 ACTIVOS = list(dict.fromkeys(ACTIVOS))
-
 ARCHIVO_LOG = "oportunidades.csv"
 
 
@@ -190,23 +179,91 @@ def verificar_mercado_general():
             ultimo_spy = df_spy.iloc[-1]
             if ultimo_spy["Close"] < ultimo_spy["EMA_200"]:
                 print(
-                    "\n⚠️ [ALERTA MACRO] El S&P 500 (SPY.BA) está por debajo de su EMA"
-                    " 200. Mercado bajista general: operar rebotes con cautela extra."
+                    "\n⚠️ [ALERTA MACRO] El S&P 500 (SPY.BA) está por debajo de su EMA 200. Mercado bajista general: operar rebotes con cautela extra."
                 )
             else:
                 print(
-                    "\n✅ [ESTADO MACRO] El S&P 500 (SPY.BA) está alcista (Precio > EMA"
-                    " 200). Entorno favorable para rebotes."
+                    "\n✅ [ESTADO MACRO] El S&P 500 (SPY.BA) está alcista (Precio > EMA 200). Entorno favorable para rebotes."
                 )
     except Exception as e:
         print(f"No se pudo verificar el contexto de mercado general: {e}")
 
 
+def obtener_ticker_original(simbolo_ba):
+    return simbolo_ba.replace(".BA", "")
+
+
+def analizar_sentimiento_noticia(titulo):
+    """Clasifica de forma rápida y eficiente el sentimiento de una noticia financiera."""
+    titulo_lower = titulo.lower()
+
+    # Palabras clave asociadas a un contexto positivo o alcista
+    palabras_positivas = [
+        "best", "buy", "growth", "rebound", "gain", "up", "bull", "boost",
+        "high", "upgrade", "profit", "beat", "positive", "strong", "surge"
+    ]
+    # Palabras clave asociadas a un contexto negativo o bajista
+    palabras_negativas = [
+        "down", "fall", "slip", "drop", "blacklist", "bear", "loss", "miss",
+        "inflation", "war", "risk", "cut", "warning", "crash", "negative"
+    ]
+
+    score = 0
+    for palabra in palabras_positivas:
+        if palabra in titulo_lower:
+            score += 1
+    for palabra in palabras_negativas:
+        if palabra in titulo_lower:
+            score -= 1
+
+    if score > 0:
+        return "🟢 [Positivo]"
+    elif score < 0:
+        return "🔴 [Negativo]"
+    else:
+        return "⚪ [Neutral]"
+
+
+def extraer_datos_fundamentales(simbolo_ba):
+    """Extrae noticias, calcula sentimiento y obtiene próximos earnings manejando excepciones de ETFs."""
+    ticker_original = obtener_ticker_original(simbolo_ba)
+    ticker_yf = yf.Ticker(ticker_original)
+    
+    noticias_con_sentimiento = []
+    try:
+        news = ticker_yf.news
+        if news:
+            for item in news[:2]:
+                titulo = item.get("title") or item.get("content", {}).get("title", "Sin título")
+                sentimiento = analizar_sentimiento_noticia(titulo)
+                noticias_con_sentimiento.append((titulo, sentimiento))
+    except Exception:
+        pass
+
+    if not noticias_con_sentimiento:
+        noticias_con_sentimiento.append(("Sin noticias destacadas en el feed actual.", "⚪ [Neutral]"))
+
+    proximo_earnings = "No disponible (ETF o N/D)"
+    try:
+        cal = ticker_yf.calendar
+        if cal is not None:
+            if isinstance(cal, dict) and "Earnings Date" in cal:
+                edates = cal["Earnings Date"]
+                if edates:
+                    proximo_earnings = str(edates[0]).split("T")[0]
+            elif isinstance(cal, pd.DataFrame) and not cal.empty:
+                proximo_earnings = str(cal.index[0]).split("T")[0]
+    except Exception:
+        # Silencia errores 404 en endpoints de fundamentales para ETFs
+        pass
+
+    return noticias_con_sentimiento, proximo_earnings
+
+
 def verificar_alertas():
     verificar_mercado_general()
     print(
-        f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera"
-        f" masiva de {len(ACTIVOS)} activos con filtros institucionales y de corto plazo..."
+        f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando cartera masiva de {len(ACTIVOS)} activos..."
     )
 
     resultados_analisis = []
@@ -228,19 +285,17 @@ def verificar_alertas():
 
             # --- INDICADORES TÉCNICOS ---
             df["EMA_200"] = df["Close"].ewm(span=200, adjust=False).mean()
-            df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()  # EMA Corto Plazo
+            df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()
             df["SMA_20"] = df["Close"].rolling(window=20).mean()
             df["STD_20"] = df["Close"].rolling(window=20).std()
             df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
 
-            # RSI Rápido de Corto Plazo (7 periodos)
             delta = df["Close"].diff()
             gain_7 = (delta.where(delta > 0, 0)).rolling(window=7).mean()
             loss_7 = (-delta.where(delta < 0, 0)).rolling(window=7).mean()
             rs_7 = gain_7 / loss_7
             df["RSI_7"] = 100 - (100 / (1 + rs_7))
 
-            # StochRSI basado en el RSI de 7 periodos (ventana de 14 para estocástico)
             min_rsi7 = df["RSI_7"].rolling(window=14).min()
             max_rsi7 = df["RSI_7"].rolling(window=14).max()
             df["StochRSI_K"] = ((df["RSI_7"] - min_rsi7) / (max_rsi7 - min_rsi7)) * 100
@@ -259,9 +314,7 @@ def verificar_alertas():
             volumen_exhausto = volumen_actual < volumen_promedio_20
 
             if tendencia_alcista:
-                puntuacion_cercania = max(0, stoch_rsi) + max(
-                    0, distancia_banda_pct * 5
-                )
+                puntuacion_cercania = max(0, stoch_rsi) + max(0, distancia_banda_pct * 5)
                 if volumen_exhausto:
                     puntuacion_cercania *= 0.9
             else:
@@ -296,28 +349,23 @@ def verificar_alertas():
                     "EMA_20": round(ema_20, 2),
                     "Stoch_RSI_7": round(stoch_rsi, 2),
                     "RSI_7": round(rsi_7, 2),
-                    "Estrategia": (
-                        "Pullback Corto Plazo (Bollinger + StochRSI(7) + Volumen Exhausto)"
-                    ),
+                    "Estrategia": "Pullback Corto Plazo (Bollinger + StochRSI(7) + Vol Exhausto)",
                 }
                 nuevas_oportunidades.append(registro)
 
-        except Exception as e:
-            pass  # Evita romper por errores puntuales de yfinance en algún activo
+        except Exception:
+            pass
 
     resultados_analisis.sort(key=lambda x: x["puntuacion"])
+    top_10 = resultados_analisis[:10]
 
-    print("\n" + "=" * 85)
-    print(" RANKING DE CERCANÍA A OPORTUNIDAD DE COMPRA (FILTRADO Y VALIDADO)")
-    print("=" * 85)
+    print("\n" + "=" * 95)
+    print(" TOP 10 RANKING DE CERCANÍA A OPORTUNIDAD DE COMPRA + SENTIMIENTO Y FUNDAMENTALES")
+    print("=" * 95)
 
-    for i, res in enumerate(resultados_analisis, 1):
+    for i, res in enumerate(top_10, 1):
         estado_alerta = " "
-        vol_tag = (
-            "📊 Vol. Normal"
-            if not res["volumen_exhausto"]
-            else "📉 Vol. Exhausto (Ideal)"
-        )
+        vol_tag = "📊 Vol. Normal" if not res["volumen_exhausto"] else "📉 Vol. Exhausto (Ideal)"
 
         if (
             res["tendencia_alcista"]
@@ -325,23 +373,26 @@ def verificar_alertas():
             and res["stoch_rsi"] < 25
             and res["volumen_exhausto"]
         ):
-            estado_alerta = " 🎯 ¡OPORTUNIDAD DE COMPRA IDEAL!"
-        elif (
-            res["tendencia_alcista"]
-            and res["precio"] <= res["banda_inf"]
-            and res["stoch_rsi"] < 25
-        ):
-            estado_alerta = " ⚠️ Cerca, pero Volumen Alto"
+            estado_alerta = " 🎯 ¡OPORTUNIDAD IDEAL!"
+        elif res["tendencia_alcista"] and res["precio"] <= res["banda_inf"] and res["stoch_rsi"] < 25:
+            estado_alerta = " ⚠️ Cerca, Vol Alto"
         elif not res["tendencia_alcista"]:
-            estado_alerta = " ⚠️ Tendencia Bajista (Descartado)"
+            estado_alerta = " ⚠️ Tendencia Bajista"
 
         print(
-            f"{i:2d}. {res['simbolo']:<8} -> Precio: ${res['precio']:>8.2f} | Banda"
-            f" Inf: ${res['banda_inf']:>8.2f} | StochRSI(7): {res['stoch_rsi']:>5.1f} |"
-            f" Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}"
+            f"\n{i:2d}. [{res['simbolo']}] -> Precio: ${res['precio']:>8.2f} | Banda Inf: ${res['banda_inf']:>8.2f}"
+            f"\n    StochRSI(7): {res['stoch_rsi']:>5.1f} | Dist: {res['distancia_pct']:>+.2f}% | {vol_tag}{estado_alerta}"
         )
 
-    print("=" * 85)
+        print("    🔍 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")
+        noticias, proximo_earnings = extraer_datos_fundamentales(res["simbolo"])
+        print(f"       📅 Próximo Balance (Earnings): {proximo_earnings}")
+        print("       📰 Últimas Noticias Relevantes y Sentimiento:")
+        for titulo, sentimiento in noticias:
+            print(f"          • {sentimiento} {titulo}")
+        print("-" * 95)
+
+    print("=" * 95)
 
     if nuevas_oportunidades:
         df_nuevos = pd.DataFrame(nuevas_oportunidades)
@@ -350,14 +401,10 @@ def verificar_alertas():
         else:
             df_nuevos.to_csv(ARCHIVO_LOG, index=False)
         print(
-            f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas de alta"
-            f" calidad en '{ARCHIVO_LOG}'."
+            f"\n[ÉXITO] Se guardaron {len(nuevas_oportunidades)} alertas de alta calidad en '{ARCHIVO_LOG}'."
         )
     else:
-        print(
-            "\n[INFO] Ningún activo cumplió todos los filtros estrictos (incluyendo"
-            " bajo volumen de retroceso) en este ciclo."
-        )
+        print("\n[INFO] Ningún activo cumplió todos los filtros estrictos en este ciclo.")
 
 
 if __name__ == "__main__":

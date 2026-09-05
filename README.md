@@ -1,60 +1,40 @@
-# 📈 CEDEAR & Wall Street Swing Trading Scanner
+# 📈 Bot de Swing Trading y Gestión de Riesgo (CEDEARs / BYMA)
 
-Un bot cuantitativo automatizado desarrollado en Python para la detección y priorización de oportunidades de compra en **CEDEARs y ETFs** operados en BYMA y Wall Street. Utiliza una estrategia basada en **pullbacks dentro de tendencias alcistas de largo plazo**, combinando análisis técnico avanzado, contexto macroeconómico y noticias fundamentales en tiempo real.
+Script automatizado en Python que analiza masivamente un universo de 157 activos en la bolsa argentina (CEDEARs), detecta oportunidades técnicas de rebote de alta calidad y calcula de manera automática la gestión de riesgo.
 
----
-
-## 🚀 Key Features (Características Principales)
-
-* **Filtro de Régimen Macro (`SPY.BA`):** Verifica automáticamente si el S&P 500 se encuentra por encima de su EMA de 200 períodos. Solo habilita oportunidades de compra de alta probabilidad si el entorno general es alcista.
-* **Análisis Técnico Multivariable:**
-  * **Bandas de Bollinger:** Detecta cuando el precio toca o perfora la banda inferior.
-  * **StochRSI (7 períodos):** Mide la sobreventa extrema en el corto plazo.
-  * **Volumen Exhausto:** Filtra que el activo tenga un volumen inferior a su promedio de 20 ruedas, señal de agotamiento de la presión vendedora.
-* **Contexto Fundamental y Próximos Balances:** Extrae de forma automática las fechas de presentación de resultados (*Earnings*) mediante la API de Yahoo Finance.
-* **Análisis de Sentimiento en Noticias:** Clasifica automáticamente los últimos titulares del activo en un semáforo de sentimiento (`🟢 Positivo`, `🔴 Negativo`, `⚪ Neutral`) para evaluar el trasfondo mediático de inmediato.
-* **Gestión de Errores Robusta:** Manejo inteligente de excepciones para evitar bloqueos por falta de metadatos en ETFs o tickers especiales.
-* **Registro Automatizado (`oportunidades.csv`):** Guarda un historial estructurado cada vez que se detecta una configuración ideal en el mercado.
+## ✨ ¿Qué hace exactamente?
+* **Filtro Macro:** Solo busca compras si el S&P 500 está alcista (Precio > EMA 200).
+* **Confluencia Técnica:** Cruza Bandas de Bollinger, StochRSI(7) en mínimos absolutos y volumen exhausto.
+* **Blindaje Anti-Earnings:** Descarta automáticamente activos con balances cercanos (menos de 7 días) para evitar riesgos de sorpresas corporativas.
+* **Gestión de Riesgo Integrada:** Calcula dinámicamente el **Stop Loss** técnico y el **Take Profit** antes de operar.
+* **Autoauditoría:** Evalúa el rendimiento histórico (Win Rate) de las alertas generadas previamente.
 
 ---
 
-## 📊 ¿Cómo Funciona la Lógica del Escáner?
+## ⚙️ Guía de instalación rápida (Paso a Paso)
 
-1. **Escaneo Masivo:** Analiza un universo curado de más de 150 activos de alta liquidez.
-2. **Validación de Tendencia:** Se descarta cualquier activo que cotice por debajo de su EMA 200.
-3. **Puntuación de Cercanía:** Calcula un ranking de proximidad basado en la distancia a la banda inferior y los niveles de sobreventa del StochRSI.
-4. **Reporte por Consola:** Devuelve un Top 10 ordenado con etiquetas de volumen, datos de balances y titulares analizados.
+Si no tenés mucha experiencia con la compu, seguí estos simples pasos para probarlo en tu Windows:
 
----
+### 1. Requisitos previos
+Tené instalado [Python](https://www.python.org/) (asegurate de marcar la casilla *"Add Python to PATH"* durante la instalación).
 
-## 🛠️ Tecnologías y Librerías Utilizadas
+### 2. Descargar el proyecto
+Descargá este repositorio como archivo ZIP desde el botón verde **"Code" > "Download ZIP"** arriba en esta página, y descomprimilo en una carpeta en tu computadora (por ejemplo, en el Escritorio).
 
-* **Python 3.10+**
-* `yfinance` - Extracción de datos de mercado, histórico y fundamentales.
-* `pandas` - Procesamiento masivo de datos y cálculos matriciales de indicadores.
+### 3. Abrir la terminal
+* Entrá a la carpeta descomprimida del proyecto.
+* En la barra de direcciones de arriba de la carpeta, borrá todo, escribí `cmd` y apretá **Enter** (se abrirá la terminal negra en esa ruta).
 
----
+### 4. Instalar las herramientas necesarias
+Copiá y pegá este comando en la terminal y apretá Enter:
 
-## ⚙️ Instalación y Uso Local
+pip install pandas yfinance
+5. Ejecutar el bot
+Una vez instalado, escribí el siguiente comando y apretá Enter para ponerlo a correr:
 
-1. Clonar el repositorio:
-
-   git clone [https://github.com/Arox13iq/cedear-swing-bot.git](https://github.com/Arox13iq/cedear-swing-bot.git)
-
-    cd cedear-swing-bot
-Crear y activar un entorno virtual:
-
-
-python -m venv venv
-# En Windows:
-venv\Scripts\activate
-# En Linux/Mac:
-source venv/bin/activate
-Instalar las dependencias:
-
-
-pip install -r requirements.txt
-Ejecutar el bot:
-
-
+Bash
 python main.py
+¡Listo! El bot analizará el mercado en segundos y te mostrará el ranking de oportunidades directamente en tu pantalla.
+
+🤝 ¿Querés dar feedback?
+Este proyecto está en fase de pruebas. Si lo probaste, se te colgó, o querés sugerir mejoras, podés dejar un comentario en el repositorio o contactarme. ¡Toda crítica constructiva es bienvenida!

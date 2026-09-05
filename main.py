@@ -357,6 +357,15 @@ def verificar_alertas():
 
     print("=" * 105)
     
+    # --- CÓDIGO RESTAURADO: GUARDAR OPORTUNIDADES DEL DÍA ---
+    if nuevas_oportunidades_ideales:
+        df_oportunidades = pd.DataFrame(nuevas_oportunidades_ideales)
+        df_oportunidades.to_csv("oportunidades.csv", index=False)
+    else:
+        # Si no hay oportunidades, crea un archivo vacío con las cabeceras
+        pd.DataFrame(columns=["simbolo", "precio_ars", "sl_ars", "tp_ars"]).to_csv("oportunidades.csv", index=False)
+    # --------------------------------------------------------
+    
     # Ejecutar el gestor del historial y automejora
     gestionar_historial_y_automejora(nuevas_oportunidades_ideales)
     

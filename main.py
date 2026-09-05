@@ -26,6 +26,35 @@ MIN_GANANCIA_PCT = 0.06 # Take profit optimizado al 6% mínimo
 HISTORIAL_FILE = "historial_senales.csv"
 
 
+def verificar_estado_usa():
+    """
+    Inmunidad a Feriados: Verifica si Wall Street operó en la última sesión esperada 
+    para evitar falsas señales por desarbitrajes cuando EE.UU. está cerrado.
+    """
+    try:
+        df_us = yf.download("SPY", period="5d", interval="1d", progress=False)
+        if df_us.empty:
+            return True
+        if isinstance(df_us.columns, pd.MultiIndex):
+            df_us.columns = df_us.columns.get_level_values(0)
+        
+        ultima_fecha = pd.to_datetime(df_us.index[-1]).date()
+        hoy = date.today()
+        
+        # Si es fin de semana (Sábado=5, Domingo=6), es normal que la última rueda sea viernes
+        if hoy.weekday() >= 5:
+            return True
+        
+        # Si es día de semana y la última fecha de SPY es anterior a hoy, hay feriado en EE.UU.
+        if ultima_fecha < hoy:
+            print(f"\n⚠️ [ESCUDO ANTI-FERIADO] Wall Street está cerrado en EE.UU. (Última rueda oficial: {ultima_fecha}).")
+            print("🛡️ [PROTECCIÓN] Se pausará el registro de nuevas 'Oportunidades Ideales' para evitar falsos positivos por volumen local distorsionado.")
+            return False
+    except Exception:
+        pass
+    return True
+
+
 def verificar_mercado_general():
     try:
         df_spy = yf.download("SPY.BA", period="1y", interval="1d", progress=False)
@@ -83,11 +112,6 @@ def extraer_datos_fundamentales(ticker_original):
 
 
 def calcular_ajuste_volatilidad(simbolo):
-    """
-    Módulo de Automejora: Analiza el historial guardado. Si un activo acumuló
-    falsos rompimientos (stop loss tocados por alta volatilidad), amplía dinámicamente
-    el riesgo permitido para evitar expulsiones prematuras.
-    """
     if not os.path.exists(HISTORIAL_FILE):
         return MAX_RIESGO_PCT
     
@@ -95,9 +119,8 @@ def calcular_ajuste_volatilidad(simbolo):
         df_hist = pd.read_csv(HISTORIAL_FILE)
         df_activo = df_hist[df_hist["simbolo"] == simbolo]
         if len(df_activo) >= 3:
-            derrotas = len(df_activo[df_activo["estado"] == "DERROTA"])
+            derrotas = len(df_activo[df_activo["estado"] == "DERROTA 🛑"])
             tasa_fallo = derrotas / len(df_activo)
-            # Si falla más del 40% de las veces, ensanchamos el Stop Loss un 1.5% extra por volatilidad
             if tasa_fallo > 0.4:
                 return MAX_RIESGO_PCT + 0.015 
     except Exception:
@@ -107,20 +130,15 @@ def calcular_ajuste_volatilidad(simbolo):
 
 
 def gestionar_historial_y_automejora(nuevas_senales):
-    """
-    Registra nuevas oportunidades ideales y audita el rendimiento pasado de las señales.
-    """
     print("\n" + "=" * 105)
     print("🧠 MÓDULO DE AUTOMEJORA & HISTORIAL DE OPORTUNIDADES IDEALES BLINDADAS")
     print("=" * 105)
 
-    # 1. Cargar o crear el archivo de historial
     if os.path.exists(HISTORIAL_FILE):
         df_hist = pd.read_csv(HISTORIAL_FILE)
     else:
         df_hist = pd.DataFrame(columns=["fecha", "simbolo", "precio_entrada", "stop_loss", "take_profit", "estado"])
 
-    # 2. Auditar señales pendientes en el historial actualizando precios con yfinance
     if not df_hist.empty and "estado" in df_hist.columns:
         pendientes = df_hist[df_hist["estado"] == "PENDIENTE"]
         for idx, row in pendientes.iterrows():
@@ -131,21 +149,24 @@ def gestionar_historial_y_automejora(nuevas_senales):
                     if isinstance(df_test.columns, pd.MultiIndex):
                         df_test.columns = df_test.columns.get_level_values(0)
                     
-                    max_alcanzado = df_test["High"].max()
-                    min_alcanzado = df_test["Low"].min()
+                    # FILTRO TEMPORAL: Solo tomar velas desde la fecha de emision de la señal
+                    fecha_senal = pd.to_datetime(row["fecha"]).tz_localize(None)
+                    df_test.index = df_test.index.tz_localize(None)
+                    df_filtrado = df_test[df_test.index >= fecha_senal]
                     
-                    # Comprobar si tocó Take Profit o Stop Loss
-                    if max_alcanzado >= row["take_profit"]:
-                        df_hist.loc[idx, "estado"] = "EXITO 🎯"
-                    elif min_alcanzado <= row["stop_loss"]:
-                        df_hist.loc[idx, "estado"] = "DERROTA 🛑"
+                    if not df_filtrado.empty:
+                        max_alcanzado = df_filtrado["High"].max()
+                        min_alcanzado = df_filtrado["Low"].min()
+                        
+                        if max_alcanzado >= row["take_profit"]:
+                            df_hist.loc[idx, "estado"] = "EXITO 🎯"
+                        elif min_alcanzado <= row["stop_loss"]:
+                            df_hist.loc[idx, "estado"] = "DERROTA 🛑"
             except Exception:
                 pass
 
-    # 3. Registrar nuevas oportunidades ideales detectadas hoy
     hoy_str = date.today().strftime("%Y-%m-%d")
     for sig in nuevas_senales:
-        # Evitar duplicar exactamente el mismo activo el mismo día
         duplicado = not df_hist[(df_hist["fecha"] == hoy_str) & (df_hist["simbolo"] == sig["simbolo"])].empty
         if not duplicado:
             nuevo_registro = pd.DataFrame([{
@@ -158,10 +179,8 @@ def gestionar_historial_y_automejora(nuevas_senales):
             }])
             df_hist = pd.concat([df_hist, nuevo_registro], ignore_index=True)
 
-    # Guardar cambios actualizados
     df_hist.to_csv(HISTORIAL_FILE, index=False)
 
-    # 4. Mostrar estadísticas de rendimiento y automejora al usuario
     total_registros = len(df_hist)
     exitos = len(df_hist[df_hist["estado"] == "EXITO 🎯"])
     derrotas = len(df_hist[df_hist["estado"] == "DERROTA 🛑"])
@@ -209,15 +228,19 @@ def auditar_cartera_personal():
 
             print(f"\n🔹 Cartera Personal: [{simbolo}]")
             print(f"   • Precio Local (ARS):  ${p_ars:>10,.2f}")
-            print(f"   • 🛑 Stop Loss (ARS):  ${sl_ars:>10,.2f}  ---> ¡Tope defensivo (Riesgo: {riesgo_dinamico*100:.1f}%)!")
-            print(f"   • 🎯 Take Profit (ARS): ${tp_ars:>10,.2f}  ---> ¡Objetivo de ganancia optimizado!")
+            print(f"   • 🛑 Stop Loss (ARS):  ${sl_ars:>10,.2f}   ---> ¡Tope defensivo (Riesgo: {riesgo_dinamico*100:.1f}%)!")
+            print(f"   • 🎯 Take Profit (ARS): ${tp_ars:>10,.2f}   ---> ¡Objetivo de ganancia optimizado!")
         except Exception as e:
             print(f"\n🔹 Cartera Personal: [{simbolo}] -> Error: {e}")
-    print("=" * 105)
+        print("=" * 105)
 
 
 def verificar_alertas():
     verificar_mercado_general()
+    
+    # Validar si Wall Street está abierto hoy
+    usa_abierto = verificar_estado_usa()
+
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando CEDEARs en pesos reales con filtros avanzados...\n")
 
     resultados_analisis = []
@@ -260,7 +283,6 @@ def verificar_alertas():
             stoch = float(stoch_rsi.iloc[-1]) if not pd.isna(stoch_rsi.iloc[-1]) else 50.0
             vol_act = float(ultimo["Volume"])
 
-            # Filtros de precisión
             rango_diario = h_ars - l_ars
             cierre_en_rango = (p_ars - l_ars) / rango_diario if rango_diario > 0 else 0.5
             vela_rechazo_alcista = cierre_en_rango >= 0.40
@@ -287,7 +309,6 @@ def verificar_alertas():
     print("=" * 105)
 
     for i, res in enumerate(top_10, 1):
-        # Aplicar automejora de volatilidad por activo según su historial de fallos
         riesgo_activo = calcular_ajuste_volatilidad(res["simbolo"])
         
         sl_candidato = res["soporte_ars"] * 0.985
@@ -305,28 +326,33 @@ def verificar_alertas():
             res["vela_alcista"] and 
             res["vol_climax"]
         )
-        estado_txt = " 🎯 ¡OPORTUNIDAD IDEAL BLINDADA!" if es_oportunidad_ideal else ""
-
-        if es_oportunidad_ideal:
+        
+        # SOLO registrar la oportunidad ideal si Wall Street estuvo abierto hoy (Inmunidad a feriados)
+        if es_oportunidad_ideal and usa_abierto:
             nuevas_oportunidades_ideales.append({
                 "simbolo": res["simbolo"],
                 "precio_ars": p_ars,
                 "sl_ars": sl_ars,
                 "tp_ars": tp_ars
             })
+            estado_txt = "   🎯 ¡OPORTUNIDAD IDEAL BLINDADA!"
+        elif es_oportunidad_ideal and not usa_abierto:
+            estado_txt = "   ⚠️ [DESCARTADA: FERIADO EN EE.UU.]"
+        else:
+            estado_txt = ""
 
         print(f"\n{i:2d}. [{res['simbolo']}.BA] -> Precio: ${p_ars:,.2f} | Banda Inf: ${banda_inf_ars:,.2f}")
-        print(f"     🛑 Stop Loss Sugerido: ${sl_ars:,.2f} (Riesgo: {riesgo_activo*100:.1f}%) | 🎯 Take Profit Sugerido: ${tp_ars:,.2f}")
-        print(f"     StochRSI(7): {res['stoch_rsi']:>5.1f} | Giro Precio: {'✅' if res['vela_alcista'] else '❌'} | Vol Giro: {'✅' if res['vol_climax'] else '❌'}{estado_txt}")
+        print(f"    🛑 Stop Loss Sugerido: ${sl_ars:,.2f} (Riesgo: {riesgo_activo*100:.1f}%) | 🎯 Take Profit Sugerido: ${tp_ars:,.2f}")
+        print(f"    StochRSI(7): {res['stoch_rsi']:>5.1f} | Giro Precio: {'✅' if res['vela_alcista'] else '❌'} | Vol Giro: {'✅' if res['vol_climax'] else '❌'}{estado_txt}")
         
         noticias, proximo_earn, dias_earn = extraer_datos_fundamentales(res['simbolo'])
         
         estado_balance = "⚠️ (¡Atención: Balance Próximo!)" if dias_earn < 7 else "(Seguro)"
-        print(f"     🔎 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")
-        print(f"       📅 Próximo Balance: {proximo_earn} {estado_balance}")
-        print(f"       📰 Últimas Noticias y Sentimiento:")
+        print(f"    🔎 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")
+        print(f"      📅 Próximo Balance: {proximo_earn} {estado_balance}")
+        print(f"      📰 Últimas Noticias y Sentimiento:")
         for titulo_noticia, sentimiento in noticias:
-            print(f"         • {sentimiento} {titulo_noticia}")
+            print(f"        • {sentimiento} {titulo_noticia}")
         print("-" * 105)
 
     print("=" * 105)

@@ -1,3 +1,3 @@
-fecha,simbolo,precio_entrada,stop_loss,take_profit,estado
-2026-09-05,LMT,41500.0,39425.0,44440.22,PENDIENTE
-2026-09-05,RTX,63675.0,60491.25,67495.5,PENDIENTE
+Fecha,Simbolo,PrecioEntrada,StopLoss,TakeProfit,Estado
+2026-09-06,LMT.BA,41500.0,36582.76,48875.86,En seguimiento
+2026-09-06,RTX.BA,63675.0,56034.0,75136.5,En seguimiento

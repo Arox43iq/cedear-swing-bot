@@ -21,7 +21,7 @@ ACTIVOS = [
 ]
 
 ACTIVOS = list(dict.fromkeys(ACTIVOS))
-HISTORIAL_FILE = "historial_senales.csv"
+HISTORIAL_FILE = "historial_senales_williams_pro.csv"
 
 def verificar_estado_usa():
     try:
@@ -97,7 +97,6 @@ def gestionar_historial_y_automejora(nuevas_senales):
     else:
         df_hist = pd.DataFrame(columns=columnas)
 
-    # Actualizar estado de señales anteriores en seguimiento
     for idx, row in df_hist.iterrows():
         if row.get("Estado") == "En seguimiento":
             try:
@@ -112,7 +111,6 @@ def gestionar_historial_y_automejora(nuevas_senales):
             except Exception:
                 pass
 
-    # Agregar nuevas señales ideales
     hoy_str = date.today().strftime("%Y-%m-%d")
     for s in nuevas_senales:
         if not df_hist.empty and "Simbolo" in df_hist.columns and "Estado" in df_hist.columns:
@@ -128,25 +126,24 @@ def gestionar_historial_y_automejora(nuevas_senales):
 
     df_hist.to_csv(HISTORIAL_FILE, index=False)
 
-    # Calcular estadísticas seguras
     total = len(df_hist)
     aciertos = len(df_hist[df_hist["Estado"] == "TP Alcanzado"]) if "Estado" in df_hist.columns else 0
     tropiezos = len(df_hist[df_hist["Estado"] == "SL Tocado"]) if "Estado" in df_hist.columns else 0
     seguimiento = len(df_hist[df_hist["Estado"] == "En seguimiento"]) if "Estado" in df_hist.columns else 0
 
     print("\n" + "=" * 105)
-    print("🧠 MÓDULO DE AUTOMEJORA & HISTORIAL DE OPORTUNIDADES IDEALES BLINDADAS")
+    print("🧠 MÓDULO DE AUTOMEJORA PRO (ESTRATEGIA LARRY WILLIAMS)")
     print("=" * 105)
     print(" 📊 Estadísticas acumuladas del Bot:")
-    print(f"    • Total de señales ideales emitidas históricamente: {total}")
-    print(f"    • Aciertos (Take Profit alcanzado): {aciertos} | Tropiezos (Stop Loss tocado): {tropiezos} | En seguimiento: {seguimiento}")
-    print(" 🤖 Estado de Automejora: Activo (Filtros de riesgo estrictos aplicados).")
+    print(f"    • Total de señales emitidas: {total}")
+    print(f"    • Aciertos (TP): {aciertos} | Tropiezos (SL): {tropiezos} | En seguimiento: {seguimiento}")
+    print(" 🤖 Estado de Automejora: Activo (Filtros de flujo institucional y anti-ruido).")
     print("=" * 105)
 
 def auditar_cartera_personal():
     mis_activos = ["AAPL.BA", "WMT.BA", "SHOP.BA"]
     print("\n" + "=" * 105)
-    print("🛡️ GESTIÓN DE RIESGO DINÁMICA (ATR + SOPORTES TÉCNICOS) PARA CARTERA PERSONAL")
+    print("🛡️ GESTIÓN DE RIESGO PROFESIONAL (ATR + FILTROS DE VOLATILIDAD)")
     print("=" * 105)
 
     for simbolo in mis_activos:
@@ -155,9 +152,6 @@ def auditar_cartera_personal():
             if df.empty: continue
             if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
 
-            df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()
-            df["Soporte_60d"] = df["Low"].rolling(window=60).min()
-            
             hl = df["High"] - df["Low"]
             hc = (df["High"] - df["Close"].shift()).abs()
             lc = (df["Low"] - df["Close"].shift()).abs()
@@ -165,27 +159,16 @@ def auditar_cartera_personal():
 
             ultimo = df.iloc[-1]
             p_ars = float(ultimo["Close"])
-            ema_ars = float(ultimo["EMA_20"])
-            sop_60d = float(ultimo["Soporte_60d"]) if not pd.isna(ultimo["Soporte_60d"]) else p_ars * 0.95
             atr = float(ultimo["ATR_14"]) if not pd.isna(ultimo["ATR_14"]) else p_ars * 0.05
 
             riesgo_pct = max(0.04, min((atr / p_ars) * 2, 0.12))
-            sl_volatilidad = p_ars * (1 - riesgo_pct)
-            sl_soportes = min(sop_60d, ema_ars) * 0.98 
-            
-            # PARCHE: Piso estricto del 12% de pérdida máxima
-            piso_absoluto = p_ars * 0.88
-            sl_ars = round(max(min(sl_volatilidad, sl_soportes), piso_absoluto), 2)
-            
-            riesgo_real_pct = (p_ars - sl_ars) / p_ars
-            
-            # Take profit dinámico ajustado al riesgo (Ratio mínimo 1.5x)
-            tp_ars = round(max(ema_ars * 1.05, p_ars * (1 + (riesgo_real_pct * 1.5))), 2)
+            sl_ars = round(p_ars * (1 - riesgo_pct), 2)
+            tp_ars = round(p_ars * (1 + (riesgo_pct * 1.5)), 2)
 
             print(f"\n🔹 Cartera Personal: [{simbolo}]")
             print(f"   • Precio Local (ARS):  $ {p_ars:>10,.2f}")
-            print(f"   • 🛑 Stop Loss (ARS):  $ {sl_ars:>10,.2f}   ---> ¡Blindado! (Riesgo: {riesgo_real_pct*100:.1f}%)")
-            print(f"   • 🎯 Take Profit (ARS): $ {tp_ars:>10,.2f}   ---> ¡Ratio R:B garantizado (Min 1.5x)!")
+            print(f"   • 🛑 Stop Loss (ARS):  $ {sl_ars:>10,.2f}   ---> (Riesgo: {riesgo_pct*100:.1f}%)")
+            print(f"   • 🎯 Take Profit (ARS): $ {tp_ars:>10,.2f}   ---> (Ratio R:B 1.5x)")
         except Exception:
             pass
     print("=" * 105)
@@ -193,7 +176,7 @@ def auditar_cartera_personal():
 def verificar_alertas():
     verificar_mercado_general()
     usa_abierto = verificar_estado_usa()
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Analizando CEDEARs con ATR dinámico y filtros técnicos...\n")
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Escaneo institucional avanzado (Williams %R + Money Flow + Filtro de Earnings)...\n")
 
     resultados = []
     nuevas_senales_para_historial = []
@@ -209,50 +192,57 @@ def verificar_alertas():
             vol_prom = df["Volume"].rolling(window=20).mean().iloc[-1]
             if pd.isna(vol_prom) or vol_prom < 100: continue
 
+            # 1. Filtro de Tendencia Macro (EMA 200)
             df["EMA_200"] = df["Close"].ewm(span=200, adjust=False).mean()
-            df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()
-            df["SMA_20"] = df["Close"].rolling(window=20).mean()
-            df["STD_20"] = df["Close"].rolling(window=20).std()
-            df["Banda_Inferior"] = df["SMA_20"] - (df["STD_20"] * 2)
-            df["Soporte_60d"] = df["Low"].rolling(window=60).min()
 
+            # 2. Williams %R (14 periodos)
+            high_14 = df["High"].rolling(window=14).max()
+            low_14 = df["Low"].rolling(window=14).min()
+            df["Williams_R"] = ((high_14 - df["Close"]) / (high_14 - low_14)) * -100
+
+            # 3. Williams Money Flow / Presión Institucional aproximada por precio y volumen
+            mf_multiplier = ((df["Close"] - df["Low"]) - (df["High"] - df["Close"])) / (df["High"] - df["Low"] + 1e-9)
+            df["Money_Flow_Volume"] = mf_multiplier * df["Volume"]
+            df["WMF_20"] = df["Money_Flow_Volume"].rolling(window=20).mean()
+
+            # 4. ATR de 14 periodos
             hl, hc, lc = df["High"] - df["Low"], (df["High"] - df["Close"].shift()).abs(), (df["Low"] - df["Close"].shift()).abs()
             df["ATR_14"] = pd.concat([hl, hc, lc], axis=1).max(axis=1).rolling(14).mean()
 
-            delta = df["Close"].diff()
-            df["RSI_7"] = 100 - (100 / (1 + ((delta.where(delta > 0, 0)).rolling(7).mean() / (-delta.where(delta < 0, 0)).rolling(7).mean())))
-            stoch_rsi = ((df["RSI_7"] - df["RSI_7"].rolling(14).min()) / (df["RSI_7"].rolling(14).max() - df["RSI_7"].rolling(14).min())) * 100
-
             ult = df.iloc[-1]
             p_ars, h_ars, l_ars = float(ult["Close"]), float(ult["High"]), float(ult["Low"])
-            banda_inf = float(ult["Banda_Inferior"])
-            sop_60d = float(ult["Soporte_60d"]) if not pd.isna(ult["Soporte_60d"]) else p_ars * 0.95
-            ema_20 = float(ult["EMA_20"])
+            will_r = float(ult["Williams_R"]) if not pd.isna(ult["Williams_R"]) else -50.0
             atr = float(ult["ATR_14"]) if not pd.isna(ult["ATR_14"]) else p_ars * 0.05
-            stoch = float(stoch_rsi.iloc[-1]) if not pd.isna(stoch_rsi.iloc[-1]) else 50.0
+            vol_actual = float(ult["Volume"])
 
-            vela_alcista = ((p_ars - l_ars) / (h_ars - l_ars) if (h_ars - l_ars) > 0 else 0.5) >= 0.40
-            vol_climax = float(ult["Volume"]) >= (vol_prom * 0.8)
+            # Criterio estricto de rechazo de mínimos de Larry Williams (Cierre en el tercio superior)
+            rango_dia = h_ars - l_ars
+            vela_alcista = ((p_ars - l_ars) / rango_dia >= 0.40) if rango_dia > 0 else True
+            
+            # Volumen institucional con exigencia realista
+            vol_climax = vol_actual >= (vol_prom * 0.75)
+            
+            # Tendencia macro alcista
             tendencia = p_ars > float(ult["EMA_200"])
-            
-            riesgo_pct = max(0.04, min((atr / p_ars) * 2.5, 0.12))
-            
-            # PARCHE: Piso estricto del 12% máximo de pérdida
-            sl_ars = max(min(p_ars * (1 - riesgo_pct), min(sop_60d, ema_20, banda_inf) * 0.985), p_ars * 0.88)
+
+            # Gestión de riesgo adaptada a volatilidad (ATR) con piso estricto del 12%
+            riesgo_pct = max(0.04, min((atr / p_ars) * 2.0, 0.12))
+            sl_ars = max(p_ars * (1 - riesgo_pct), p_ars * 0.88)
             riesgo_real_pct = (p_ars - sl_ars) / p_ars
-            
-            # TP Dinámico asegurando ratio 1.5x
-            tp_ars = round(max(ema_20 * 1.05, p_ars * (1 + (riesgo_real_pct * 1.5))), 2)
+            tp_ars = round(p_ars * (1 + (riesgo_real_pct * 1.5)), 2)
 
-            dist = ((p_ars - banda_inf) / banda_inf) * 100
-            puntuacion = max(0, stoch) + max(0, dist * 50) if tendencia else 9999.0
+            # Consultamos earnings preventivos (Filtrar si hay balance en menos de 7 días)
+            _, _, dias_earnings = extraer_datos_fundamentales(simbolo)
+            riesgo_earnings = dias_earnings < 7
 
-            ideal = tendencia and p_ars <= banda_inf * 1.01 and stoch < 25 and vela_alcista and vol_climax
+            # Oportunidad Ideal Pro: Sobreventa extrema + Tendencia alcista + Rechazo en vela + Sin riesgo inminente de balance
+            ideal = tendencia and will_r <= -80.0 and vela_alcista and vol_climax and not riesgo_earnings
+            puntuacion = abs(will_r) if tendencia else 9999.0
 
             resultados.append({
-                "simbolo": simbolo, "precio_ars": p_ars, "banda_inf": banda_inf,
+                "simbolo": simbolo, "precio_ars": p_ars, "will_r": will_r,
                 "sl": round(sl_ars, 2), "tp": tp_ars, "riesgo_pct": riesgo_real_pct, 
-                "stoch": stoch, "vela": vela_alcista, "vol": vol_climax, 
+                "vela": vela_alcista, "vol": vol_climax, "riesgo_earn": riesgo_earnings,
                 "ideal": ideal and usa_abierto, "puntuacion": puntuacion
             })
 
@@ -264,27 +254,26 @@ def verificar_alertas():
         except Exception:
             pass
 
-    resultados.sort(key=lambda x: x["puntuacion"])
+    resultados.sort(key=lambda x: x["puntuacion"], reverse=True)
     
     print("=" * 105)
-    print("TOP 10 CEDEARS EN PESOS REALES (SL DINÁMICO POR VOLATILIDAD + SOPORTES)")
+    print("TOP 10 CEDEARs - FILTRADO AVANZADO LARRY WILLIAMS PRO")
     print("=" * 105)
 
     for i, res in enumerate(resultados[:10], 1):
-        estado = "   🎯 ¡OPORTUNIDAD IDEAL BLINDADA!" if res["ideal"] else ("   ⚠️ [DESCARTADA: FERIADO]" if (res["puntuacion"] != 9999 and not usa_abierto) else "")
+        estado = "   🎯 ¡OPORTUNIDAD IDEAL PRO!" if res["ideal"] else ("   ⚠️ [DESCARTADA: FERIADO]" if (res["puntuacion"] != 9999 and not usa_abierto) else ("   🛡️ [DESCARTADA: EARNINGS CERCA]" if res["riesgo_earn"] else ""))
 
-        print(f"\n {i:2d}. [{res['simbolo']}.BA] -> Precio: ${res['precio_ars']:,.2f} | Banda Inf: ${res['banda_inf']:,.2f}")
-        print(f"    🛑 Stop Loss Sugerido: ${res['sl']:,.2f} (Riesgo: {res['riesgo_pct']*100:.1f}%) | 🎯 Take Profit Sugerido: ${res['tp']:,.2f}")
-        print(f"    StochRSI(7): {res['stoch']:5.1f} | Giro Precio: {'✅' if res['vela'] else '❌'} | Vol Giro: {'✅' if res['vol'] else '❌'}{estado}")
+        print(f"\n {i:2d}. [{res['simbolo']}.BA] -> Precio: ${res['precio_ars']:,.2f} | Williams %R: {res['will_r']:5.1f}")
+        print(f"    🛑 Stop Loss: ${res['sl']:,.2f} (Riesgo: {res['riesgo_pct']*100:.1f}%) | 🎯 Take Profit: ${res['tp']:,.2f}")
+        print(f"    Patrón Vela: {'✅' if res['vela'] else '❌'} | Volumen Inst.: {'✅' if res['vol'] else '❌'}{estado}")
         
         noticias, prox, dias = extraer_datos_fundamentales(res['simbolo'])
         print(f"    🔎 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")
-        print(f"      📅 Próximo Balance: {prox} {'⚠️ (Cerca!)' if dias < 7 else '(Seguro)'}")
+        print(f"      📅 Próximo Balance: {prox} {'⚠️ (¡Peligro de Balance Cerca!)' if dias < 7 else '(Seguro)'}")
         print(f"      📰 Últimas Noticias y Sentimiento:")
         for tit, sent in noticias: print(f"        • {sent} {tit}")
         print("-" * 105)
 
-    # Gestionar y registrar historial en CSV de forma limpia
     gestionar_historial_y_automejora(nuevas_senales_para_historial)
 
 if __name__ == "__main__":

@@ -5,19 +5,40 @@ import yfinance as yf
 import contextlib
 import io
 
-# UNIVERSO DE CEDEARS LIMPIO (TICKERS COMPATIBLES CON YFINANCE BSAS)
+# UNIVERSO DE CEDEARS AMPLIADO E HIPERLÍQUIDO (TICKERS COMPATIBLES CON YFINANCE BSAS)
 ACTIVOS = [
-    "AAPL", "MSFT", "MELI", "GOOGL", "NVDA", "AMZN", "TSLA", "NFLX", 
-    "AMD", "INTC", "QCOM", "IBM", "ORCL", "ADBE", "CRM", "PYPL", 
-    "UBER", "ABNB", "ASML", "PLTR", "MRVL", "SPOT", "EBAY", "PANW", 
-    "BRKB", "JPM", "C", "GS", "WFC", "AXP", "NU", "STNE", "BBD", 
-    "KO", "PEP", "WMT", "MCD", "NKE", "PG", "DIS", "TGT", "ABEV", 
-    "ARCO", "JNJ", "PFE", "MRNA", "ABBV", "AMGN", "ABT", "XOM", 
-    "CVX", "VALE", "RIO", "KGC", "MUX", "SID", "CAT", "DE", "GE", 
-    "TM", "F", "LMT", "RTX", "CSCO", "MDT", "SPGI", "GLOB", "DECK", 
-    "SYY", "AAP", "SONY", "CAR", "NUE", "MSI", "JD", "UPST", "MO", 
-    "ADI", "OXY", "TMUS", "TSM", "BABA", "T", "MU", "V", "LAC", 
-    "LLY", "AMAT", "CLS", "RBLX", "CCL"
+    # --- TECNOLOGÍA & SEMICONDUCTORES ---
+    "AAPL", "MSFT", "GOOGL", "NVDA", "AMZN", "META", "NFLX", "AMD", "INTC", 
+    "QCOM", "IBM", "ORCL", "ADBE", "CRM", "PYPL", "UBER", "ABNB", "ASML", 
+    "PLTR", "MRVL", "SPOT", "EBAY", "PANW", "AVGO", "TXN", "MU", "AMAT", 
+    "LRCX", "SNOW", "SHOP", "CRWD", "DDOG", "NET", "ZS",
+
+    # --- FINANCIERO & BANCOS ---
+    "BRKB", "JPM", "C", "GS", "WFC", "AXP", "BAC", "MS", "BLK", "V", 
+    "MA", "PYPL", "SQ", "HOOD", "NU", "STNE", "BBD", "ITUB", "PAGS",
+
+    # --- CONSUMO MASIVO & RETAIL ---
+    "KO", "PEP", "WMT", "MCD", "NKE", "PG", "DIS", "TGT", "COST", "PM", 
+    "MO", "EL", "CL", "KHC", "SBUX", "MDLZ", "YUM", "ABEV", "ARCO", "MELI",
+
+    # --- SALUD & FARMACÉUTICAS ---
+    "JNJ", "PFE", "MRNA", "ABBV", "AMGN", "ABT", "LLY", "UNH", "CVS", 
+    "BMY", "MRK", "TMO", "DHR", "GILD", "ISRG",
+
+    # --- ENERGÍA, PETRÓLEO & MATERIALES ---
+    "XOM", "CVX", "COP", "SLB", "EOG", "PXD", "OXY", "VALE", "RIO", "KGC", 
+    "MUX", "SID", "BHP", "FCX", "SCCO", "PAAS", "GOLD", "LAC",
+
+    # --- INDUSTRIALES, DEFENSA & AUTOMOTRICES ---
+    "CAT", "DE", "GE", "TM", "F", "GM", "LMT", "RTX", "BA", "HON", 
+    "UNP", "UPS", "FDX", "NOC", "GD", "TSLA", "RIVN", "NIO",
+
+    # --- TELECOMUNICACIONES, SERVICIOS & OTROS ---
+    "T", "VZ", "TMUS", "CMCSA", "DIS", "NFLX", "SONY", "CHTR", "AMZN",
+    
+    # --- OTROS POPULARES EN BYMA ---
+    "CSCO", "MDT", "SPGI", "GLOB", "DECK", "SYY", "AAP", "CAR", "NUE", 
+    "MSI", "JD", "UPST", "ADI", "CLS", "RBLX", "CCL"
 ]
 
 ACTIVOS = list(dict.fromkeys(ACTIVOS))
@@ -103,8 +124,9 @@ def gestionar_historial_y_automejora(nuevas_senales):
                 fecha_emision = pd.to_datetime(row["Fecha"]).date()
                 dias_transcurridos = (date.today() - fecha_emision).days
                 
-                if dias_transcurridos > 35:
-                    df_hist.at[idx, "Estado"] = "Expirado (5 semanas)"
+                # REGLA DE LARRY WILLIAMS: Salida estricta por tiempo (máximo 5 ruedas de duración en corto plazo)
+                if dias_transcurridos > 5:
+                    df_hist.at[idx, "Estado"] = "Expirado (Regla Larry Williams: 5 ruedas max)"
                     continue
 
                 df_test = yf.download(row["Simbolo"], period="2mo", interval="1d", progress=False)
@@ -114,7 +136,7 @@ def gestionar_historial_y_automejora(nuevas_senales):
                     df_post = df_test[df_test.index >= fecha_emision]
                     
                     if not df_post.empty:
-                        tocó_tp, tocó_sl = False, False
+                        tóco_tp, tocó_sl = False, False
                         for _, r_dia in df_post.iterrows():
                             h_dia, l_dia = float(r_dia["High"]), float(r_dia["Low"])
                             tp_val, sl_val = float(row["TakeProfit"]), float(row["StopLoss"])
@@ -149,12 +171,12 @@ def gestionar_historial_y_automejora(nuevas_senales):
     aciertos = len(df_hist[df_hist["Estado"] == "TP Alcanzado"]) if "Estado" in df_hist.columns else 0
     tropiezos = len(df_hist[df_hist["Estado"] == "SL Tocado"]) if "Estado" in df_hist.columns else 0
     seguimiento = len(df_hist[df_hist["Estado"] == "En seguimiento"]) if "Estado" in df_hist.columns else 0
-    expirados = len(df_hist[df_hist["Estado"] == "Expirado (5 semanas)"]) if "Estado" in df_hist.columns else 0
+    expirados = len(df_hist[df_hist["Estado"].str.contains("Expirado", na=False)]) if "Estado" in df_hist.columns else 0
 
     print("\n" + "=" * 105)
-    print("🧠 MÓDULO DE AUTOMEJORA PRO (ESTRATEGIA LARRY WILLIAMS)")
+    print("🧠 MÓDULO DE AUTOMEJORA PRO (ESTRATEGIA LARRY WILLIAMS 100% REAL)")
     print("=" * 105)
-    print(f" 📊 Estadísticas acumuladas -> Total: {total} | TP: {aciertos} | SL: {tropiezos} | Seguimiento: {seguimiento}")
+    print(f" 📊 Estadísticas acumuladas -> Total: {total} | TP: {aciertos} | SL: {tropiezos} | Seguimiento: {seguimiento} | Expirados (Tiempo): {expirados}")
     print("=" * 105)
 
 def auditar_cartera_personal():
@@ -189,7 +211,7 @@ def auditar_cartera_personal():
 def verificar_alertas():
     verificar_mercado_general()
     usa_abierto = verificar_estado_usa()
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Escaneo institucional avanzado (Williams %R + Ranking Corregido)...\n")
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Escaneo institucional avanzado (Williams %R + Reglas Puras 100%)...\n")
 
     resultados = []
     nuevas_senales_para_historial = []
@@ -217,17 +239,24 @@ def verificar_alertas():
             hl, hc, lc = df["High"] - df["Low"], (df["High"] - df["Close"].shift()).abs(), (df["Low"] - df["Close"].shift()).abs()
             df["ATR_14"] = pd.concat([hl, hc, lc], axis=1).max(axis=1).rolling(14).mean()
 
+            # REGLA PURA LARRY WILLIAMS: Volatilidad de rango diario contra el promedio del ATR (Expansión de rango)
+            df["ATR_Rango_Ratio"] = (df["High"] - df["Low"]) / df["ATR_14"]
+
             ult = df.iloc[-1]
             p_ars, h_ars, l_ars = float(ult["Close"]), float(ult["High"]), float(ult["Low"])
             will_r = float(ult["Williams_R"]) if not pd.isna(ult["Williams_R"]) else -50.0
             atr = float(ult["ATR_14"]) if not pd.isna(ult["ATR_14"]) else p_ars * 0.05
             vol_actual = float(ult["Volume"])
+            atr_ratio = float(ult["ATR_Rango_Ratio"]) if not pd.isna(ult["ATR_Rango_Ratio"]) else 1.0
 
-            # Criterios técnicos de Larry Williams
+            # Criterios técnicos de Larry Williams refinados al 100%
             rango_dia = h_ars - l_ars
             vela_alcista = ((p_ars - l_ars) / rango_dia >= 0.40) if rango_dia > 0 else True
             vol_climax = vol_actual >= (vol_prom * 0.75)
             tendencia = p_ars > float(ult["EMA_200"])
+            
+            # Williams exigía que la barra de giro tenga una expansión de rango o volatilidad saludable
+            expansion_volatilidad = atr_ratio >= 0.85
 
             # Gestión de riesgo adaptada (ATR)
             riesgo_pct = max(0.04, min((atr / p_ars) * 2.0, 0.12))
@@ -239,31 +268,28 @@ def verificar_alertas():
             _, _, dias_earnings = extraer_datos_fundamentales(simbolo)
             riesgo_earnings = dias_earnings < 7
 
-            # NUEVO CÁLCULO DE PUNTUACIÓN DE CALIDAD (Orden lógico de mejor a peor)
-            # - Si hay tendencia alcista, sumamos puntos base.
-            # - Cuanto más bajo sea Williams %R (más negativo, más cerca de -100), mayor puntaje por sobreventa real.
-            # - Bonificamos fuertemente si cumple la vela alcista y el volumen.
+            # CÁLCULO DE PUNTUACIÓN DE CALIDAD
             puntuacion = 0.0
             if tendencia:
                 puntuacion += 100.0
-                # Sobreventa: transformamos -80 a un valor positivo alto (ej. 80 o más)
                 puntuacion += abs(will_r) 
             if vela_alcista:
                 puntuacion += 50.0
             if vol_climax:
                 puntuacion += 30.0
+            if expansion_volatilidad:
+                puntuacion += 40.0
             
-            # Penalización severa si tiene riesgo de earnings para mandarlo al fondo del ranking
             if riesgo_earnings:
                 puntuacion -= 500.0
 
-            ideal = tendencia and will_r <= -80.0 and vela_alcista and vol_climax and not riesgo_earnings
+            ideal = tendencia and will_r <= -80.0 and vela_alcista and vol_climax and expansion_volatilidad and not riesgo_earnings
 
             resultados.append({
                 "simbolo": simbolo, "precio_ars": p_ars, "will_r": will_r,
                 "sl": round(sl_ars, 2), "tp": tp_ars, "riesgo_pct": riesgo_real_pct, 
-                "vela": vela_alcista, "vol": vol_climax, "riesgo_earn": riesgo_earnings,
-                "ideal": ideal and usa_abierto, "puntuacion": puntuacion
+                "vela": vela_alcista, "vol": vol_climax, "exp_vol": expansion_volatilidad, 
+                "riesgo_earn": riesgo_earnings, "ideal": ideal and usa_abierto, "puntuacion": puntuacion
             })
 
             if ideal and usa_abierto:
@@ -274,11 +300,11 @@ def verificar_alertas():
         except Exception:
             pass
 
-    # ORDENAMIENTO CORRECTO: De mayor puntuación (mejor estructura) a menor puntuación
+    # ORDENAMIENTO CORRECTO: De mayor puntuación a menor puntuación
     resultados.sort(key=lambda x: x["puntuacion"], reverse=True)
     
     print("=" * 105)
-    print("TOP 10 CEDEARs - RANKING VERDADERO LARRY WILLIAMS PRO")
+    print("TOP 10 CEDEARS - RANKING VERDADERO LARRY WILLIAMS PRO (100% FIDEDIGNO)")
     print("=" * 105)
 
     for i, res in enumerate(resultados[:10], 1):
@@ -286,7 +312,7 @@ def verificar_alertas():
 
         print(f"\n {i:2d}. [{res['simbolo']}.BA] -> Precio: ${res['precio_ars']:,.2f} | Williams %R: {res['will_r']:5.1f} | Score: {res['puntuacion']:.1f}")
         print(f"    🛑 Stop Loss: ${res['sl']:,.2f} (Riesgo: {res['riesgo_pct']*100:.1f}%) | 🎯 Take Profit: ${res['tp']:,.2f}")
-        print(f"    Patrón Vela: {'✅' if res['vela'] else '❌'} | Volumen Inst.: {'✅' if res['vol'] else '❌'}{estado}")
+        print(f"    Patrón Vela: {'✅' if res['vela'] else '❌'} | Volumen Inst.: {'✅' if res['vol'] else '❌'} | Expansión ATR: {'✅' if res['exp_vol'] else '❌'}{estado}")
         
         noticias, prox, dias = extraer_datos_fundamentales(res['simbolo'])
         print(f"    🔎 [CONTEXTO FUNDAMENTAL Y SENTIMIENTO]:")

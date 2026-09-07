@@ -49,6 +49,8 @@ Una vez instaladas las dependencias, escribe el siguiente comando y presiona Ent
 
 
 python main.py
+
+
 ¡Listo! El bot analizará el mercado de forma automática, validará el estado de Wall Street, calculará los niveles de riesgo profesional y te mostrará el ranking de oportunidades directamente en tu pantalla.
 
 📁 Estructura del Proyecto

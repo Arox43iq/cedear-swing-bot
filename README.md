@@ -26,6 +26,10 @@ Script automatizado en Python diseñado para escanear masivamente el universo de
 * **yfinance:** Extracción de datos de mercado históricos, calendario de balances y cotizaciones en tiempo real.
 * **pandas:** Procesamiento de datos masivos y manipulación de estructuras analíticas.
 
+⏱️ Nota importante sobre el tiempo de ejecución
+Cuando ejecutes python main.py, notarás que la terminal puede demorar entre 5 y 12 minutos en completar todo el proceso. ¡Es totalmente normal y el script no se colgó!
+
+Esto sucede porque el bot procesa masivamente todo el universo de CEDEARs y, para cada activo, realiza de forma secuencial una consulta web segura a Yahoo Finance para descargar el historial técnico, calcular indicadores complejos, verificar el calendario de balances y extraer las últimas noticias financieras. La paciencia vale la pena para obtener un análisis institucional 100% depurado.
 ---
 
 ## ⚙️ Guía de instalación rápida (Paso a Paso para principiantes)

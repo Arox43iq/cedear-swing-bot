@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import os
 import pandas as pd
 import yfinance as yf
@@ -100,14 +100,34 @@ def gestionar_historial_y_automejora(nuevas_senales):
     for idx, row in df_hist.iterrows():
         if row.get("Estado") == "En seguimiento":
             try:
-                df_test = yf.download(row["Simbolo"], period="5d", interval="1d", progress=False)
+                fecha_emision = pd.to_datetime(row["Fecha"]).date()
+                dias_transcurridos = (date.today() - fecha_emision).days
+                
+                if dias_transcurridos > 35:
+                    df_hist.at[idx, "Estado"] = "Expirado (5 semanas)"
+                    continue
+
+                df_test = yf.download(row["Simbolo"], period="2mo", interval="1d", progress=False)
                 if not df_test.empty:
                     if isinstance(df_test.columns, pd.MultiIndex): df_test.columns = df_test.columns.get_level_values(0)
-                    p_actual = float(df_test.iloc[-1]["Close"])
-                    if p_actual >= float(row["TakeProfit"]):
-                        df_hist.at[idx, "Estado"] = "TP Alcanzado"
-                    elif p_actual <= float(row["StopLoss"]):
-                        df_hist.at[idx, "Estado"] = "SL Tocado"
+                    df_test.index = pd.to_datetime(df_test.index).date()
+                    df_post = df_test[df_test.index >= fecha_emision]
+                    
+                    if not df_post.empty:
+                        tocó_tp, tocó_sl = False, False
+                        for _, r_dia in df_post.iterrows():
+                            h_dia, l_dia = float(r_dia["High"]), float(r_dia["Low"])
+                            tp_val, sl_val = float(row["TakeProfit"]), float(row["StopLoss"])
+                            if h_dia >= tp_val: tocó_tp = True
+                            if l_dia <= sl_val: tocó_sl = True
+                        
+                        if tocó_tp and not tocó_sl:
+                            df_hist.at[idx, "Estado"] = "TP Alcanzado"
+                        elif tocó_sl and not tocó_tp:
+                            df_hist.at[idx, "Estado"] = "SL Tocado"
+                        elif tocó_tp and tocó_sl:
+                            p_actual = float(df_post.iloc[-1]["Close"])
+                            df_hist.at[idx, "Estado"] = "TP Alcanzado" if p_actual >= tp_val else "SL Tocado"
             except Exception:
                 pass
 
@@ -115,8 +135,7 @@ def gestionar_historial_y_automejora(nuevas_senales):
     for s in nuevas_senales:
         if not df_hist.empty and "Simbolo" in df_hist.columns and "Estado" in df_hist.columns:
             condicion = (df_hist["Simbolo"] == s["simbolo"]) & (df_hist["Estado"] == "En seguimiento")
-            if condicion.any():
-                continue
+            if condicion.any(): continue
         
         nueva_fila = pd.DataFrame([{
             "Fecha": hoy_str, "Simbolo": s["simbolo"], "PrecioEntrada": s["precio"],
@@ -125,19 +144,17 @@ def gestionar_historial_y_automejora(nuevas_senales):
         df_hist = pd.concat([df_hist, nueva_fila], ignore_index=True)
 
     df_hist.to_csv(HISTORIAL_FILE, index=False)
-
+    
     total = len(df_hist)
     aciertos = len(df_hist[df_hist["Estado"] == "TP Alcanzado"]) if "Estado" in df_hist.columns else 0
     tropiezos = len(df_hist[df_hist["Estado"] == "SL Tocado"]) if "Estado" in df_hist.columns else 0
     seguimiento = len(df_hist[df_hist["Estado"] == "En seguimiento"]) if "Estado" in df_hist.columns else 0
+    expirados = len(df_hist[df_hist["Estado"] == "Expirado (5 semanas)"]) if "Estado" in df_hist.columns else 0
 
     print("\n" + "=" * 105)
     print("🧠 MÓDULO DE AUTOMEJORA PRO (ESTRATEGIA LARRY WILLIAMS)")
     print("=" * 105)
-    print(" 📊 Estadísticas acumuladas del Bot:")
-    print(f"    • Total de señales emitidas: {total}")
-    print(f"    • Aciertos (TP): {aciertos} | Tropiezos (SL): {tropiezos} | En seguimiento: {seguimiento}")
-    print(" 🤖 Estado de Automejora: Activo (Filtros de flujo institucional y anti-ruido).")
+    print(f" 📊 Estadísticas acumuladas -> Total: {total} | TP: {aciertos} | SL: {tropiezos} | Seguimiento: {seguimiento}")
     print("=" * 105)
 
 def auditar_cartera_personal():
@@ -160,15 +177,11 @@ def auditar_cartera_personal():
             ultimo = df.iloc[-1]
             p_ars = float(ultimo["Close"])
             atr = float(ultimo["ATR_14"]) if not pd.isna(ultimo["ATR_14"]) else p_ars * 0.05
-
             riesgo_pct = max(0.04, min((atr / p_ars) * 2, 0.12))
             sl_ars = round(p_ars * (1 - riesgo_pct), 2)
             tp_ars = round(p_ars * (1 + (riesgo_pct * 1.5)), 2)
 
-            print(f"\n🔹 Cartera Personal: [{simbolo}]")
-            print(f"   • Precio Local (ARS):  $ {p_ars:>10,.2f}")
-            print(f"   • 🛑 Stop Loss (ARS):  $ {sl_ars:>10,.2f}   ---> (Riesgo: {riesgo_pct*100:.1f}%)")
-            print(f"   • 🎯 Take Profit (ARS): $ {tp_ars:>10,.2f}   ---> (Ratio R:B 1.5x)")
+            print(f"🔹 Cartera Personal: [{simbolo}] | Precio: ${p_ars:,.2f} | SL: ${sl_ars:,.2f} | TP: ${tp_ars:,.2f}")
         except Exception:
             pass
     print("=" * 105)
@@ -176,7 +189,7 @@ def auditar_cartera_personal():
 def verificar_alertas():
     verificar_mercado_general()
     usa_abierto = verificar_estado_usa()
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Escaneo institucional avanzado (Williams %R + Money Flow + Filtro de Earnings)...\n")
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Escaneo institucional avanzado (Williams %R + Ranking Corregido)...\n")
 
     resultados = []
     nuevas_senales_para_historial = []
@@ -200,12 +213,7 @@ def verificar_alertas():
             low_14 = df["Low"].rolling(window=14).min()
             df["Williams_R"] = ((high_14 - df["Close"]) / (high_14 - low_14)) * -100
 
-            # 3. Williams Money Flow / Presión Institucional aproximada por precio y volumen
-            mf_multiplier = ((df["Close"] - df["Low"]) - (df["High"] - df["Close"])) / (df["High"] - df["Low"] + 1e-9)
-            df["Money_Flow_Volume"] = mf_multiplier * df["Volume"]
-            df["WMF_20"] = df["Money_Flow_Volume"].rolling(window=20).mean()
-
-            # 4. ATR de 14 periodos
+            # 3. ATR de 14 periodos
             hl, hc, lc = df["High"] - df["Low"], (df["High"] - df["Close"].shift()).abs(), (df["Low"] - df["Close"].shift()).abs()
             df["ATR_14"] = pd.concat([hl, hc, lc], axis=1).max(axis=1).rolling(14).mean()
 
@@ -215,29 +223,41 @@ def verificar_alertas():
             atr = float(ult["ATR_14"]) if not pd.isna(ult["ATR_14"]) else p_ars * 0.05
             vol_actual = float(ult["Volume"])
 
-            # Criterio estricto de rechazo de mínimos de Larry Williams (Cierre en el tercio superior)
+            # Criterios técnicos de Larry Williams
             rango_dia = h_ars - l_ars
             vela_alcista = ((p_ars - l_ars) / rango_dia >= 0.40) if rango_dia > 0 else True
-            
-            # Volumen institucional con exigencia realista
             vol_climax = vol_actual >= (vol_prom * 0.75)
-            
-            # Tendencia macro alcista
             tendencia = p_ars > float(ult["EMA_200"])
 
-            # Gestión de riesgo adaptada a volatilidad (ATR) con piso estricto del 12%
+            # Gestión de riesgo adaptada (ATR)
             riesgo_pct = max(0.04, min((atr / p_ars) * 2.0, 0.12))
             sl_ars = max(p_ars * (1 - riesgo_pct), p_ars * 0.88)
             riesgo_real_pct = (p_ars - sl_ars) / p_ars
             tp_ars = round(p_ars * (1 + (riesgo_real_pct * 1.5)), 2)
 
-            # Consultamos earnings preventivos (Filtrar si hay balance en menos de 7 días)
+            # Earnings
             _, _, dias_earnings = extraer_datos_fundamentales(simbolo)
             riesgo_earnings = dias_earnings < 7
 
-            # Oportunidad Ideal Pro: Sobreventa extrema + Tendencia alcista + Rechazo en vela + Sin riesgo inminente de balance
+            # NUEVO CÁLCULO DE PUNTUACIÓN DE CALIDAD (Orden lógico de mejor a peor)
+            # - Si hay tendencia alcista, sumamos puntos base.
+            # - Cuanto más bajo sea Williams %R (más negativo, más cerca de -100), mayor puntaje por sobreventa real.
+            # - Bonificamos fuertemente si cumple la vela alcista y el volumen.
+            puntuacion = 0.0
+            if tendencia:
+                puntuacion += 100.0
+                # Sobreventa: transformamos -80 a un valor positivo alto (ej. 80 o más)
+                puntuacion += abs(will_r) 
+            if vela_alcista:
+                puntuacion += 50.0
+            if vol_climax:
+                puntuacion += 30.0
+            
+            # Penalización severa si tiene riesgo de earnings para mandarlo al fondo del ranking
+            if riesgo_earnings:
+                puntuacion -= 500.0
+
             ideal = tendencia and will_r <= -80.0 and vela_alcista and vol_climax and not riesgo_earnings
-            puntuacion = abs(will_r) if tendencia else 9999.0
 
             resultados.append({
                 "simbolo": simbolo, "precio_ars": p_ars, "will_r": will_r,
@@ -254,16 +274,17 @@ def verificar_alertas():
         except Exception:
             pass
 
+    # ORDENAMIENTO CORRECTO: De mayor puntuación (mejor estructura) a menor puntuación
     resultados.sort(key=lambda x: x["puntuacion"], reverse=True)
     
     print("=" * 105)
-    print("TOP 10 CEDEARs - FILTRADO AVANZADO LARRY WILLIAMS PRO")
+    print("TOP 10 CEDEARs - RANKING VERDADERO LARRY WILLIAMS PRO")
     print("=" * 105)
 
     for i, res in enumerate(resultados[:10], 1):
-        estado = "   🎯 ¡OPORTUNIDAD IDEAL PRO!" if res["ideal"] else ("   ⚠️ [DESCARTADA: FERIADO]" if (res["puntuacion"] != 9999 and not usa_abierto) else ("   🛡️ [DESCARTADA: EARNINGS CERCA]" if res["riesgo_earn"] else ""))
+        estado = "   🎯 ¡OPORTUNIDAD IDEAL PRO!" if res["ideal"] else ("   ⚠️ [DESCARTADA: FERIADO]" if (res["puntuacion"] > 0 and not usa_abierto) else ("   🛡️ [DESCARTADA: EARNINGS CERCA]" if res["riesgo_earn"] else ""))
 
-        print(f"\n {i:2d}. [{res['simbolo']}.BA] -> Precio: ${res['precio_ars']:,.2f} | Williams %R: {res['will_r']:5.1f}")
+        print(f"\n {i:2d}. [{res['simbolo']}.BA] -> Precio: ${res['precio_ars']:,.2f} | Williams %R: {res['will_r']:5.1f} | Score: {res['puntuacion']:.1f}")
         print(f"    🛑 Stop Loss: ${res['sl']:,.2f} (Riesgo: {res['riesgo_pct']*100:.1f}%) | 🎯 Take Profit: ${res['tp']:,.2f}")
         print(f"    Patrón Vela: {'✅' if res['vela'] else '❌'} | Volumen Inst.: {'✅' if res['vol'] else '❌'}{estado}")
         

@@ -18,13 +18,28 @@ Script automatizado en Python diseñado para escanear masivamente el universo de
 * **🧠 Módulo de Automejora (Autoauditoría):** Evalúa de forma autónoma el rendimiento histórico y el Win Rate real de las señales emitidas mediante un registro persistente.
 * **📂 Sincronización Local:** Genera automáticamente archivos estructurados (`historial_senales_williams_pro.csv`) para realizar un seguimiento continuo de los aciertos, tropiezos y expiraciones temporales.
 
+## 🚀 Guía Operativa: Cómo operar con el Sistema
+
+Este bot no es una herramienta de ejecución ciega, sino un **generador cuantitativo de alta probabilidad** diseñado bajo la metodología de Larry Williams, complementado con un flujo de validación institucional. 
+
+Para operar una señal con éxito, seguí este proceso de 3 pasos:
+
+### 1️⃣ Paso 1: Escaneo Cuantitativo (El Bot)
+Ejecutá el script principal para obtener el ranking actualizado de CEDEARs:
+* El bot evalúa automáticamente el **Williams %R (14)** en busca de sobreventa extrema.
+* Aplica el filtro de tendencia macro (**EMA 200**), la expansión de volatilidad (**ATR**) y el **Escudo Anti-Feriados / Anti-Earnings**.
+* Te devuelve un Top 10 con los activos más aptos junto a sus niveles matemáticos exactos de **Stop Loss** y **Take Profit**.
+
+### 2️⃣ Paso 2: Validación Visual SMC (El Doble Chequeo)
+Antes de comprometer capital, tomá el activo que encabeza el ranking y abrilo en tu plataforma de gráficos (TradingView / Cocos Capital) aplicando un indicador de **Smart Money Concepts (SMC)**:
+* **Verificá la estructura:** Comprobá que el Stop Loss calculado por el bot coincida o esté protegido detrás de un **Order Block** o soporte institucional clave.
+* **Confirmo el objetivo:** Asegurate de que el Take Profit tenga espacio lógico antes de chocar con una resistencia macro de oferta.
+
+### 3️⃣ Paso 3: Ejecución y Luz Verde
+* Si la matemática fría del bot y la estructura visual del gráfico confluyen perfectamente (el activo está sobrevendido, respeta la tendencia y apoya en una zona institucional), **se da luz verde para ejecutar la orden** en el broker.
+* Respetá siempre la gestión de riesgo dictada por el ATR.
 ---
 
-## 🛠️ Tecnologías y Librerías Utilizadas
-
-* **Python 3.x**
-* **yfinance:** Extracción de datos de mercado históricos, calendario de balances y cotizaciones en tiempo real.
-* **pandas:** Procesamiento de datos masivos y manipulación de estructuras analíticas.
 
 ⏱️ Nota importante sobre el tiempo de ejecución
 Cuando ejecutes python main.py, notarás que la terminal puede demorar entre 5 y 12 minutos en completar todo el proceso. ¡Es totalmente normal y el script no se colgó!
@@ -61,6 +76,12 @@ python main.py
 main.py: Script principal que ejecuta el análisis técnico avanzado, filtros de volumen institucional, control macro, scraping de noticias y gestión de riesgo por ATR.
 
 historial_senales_williams_pro.csv: Historial acumulado generado de forma automática para el seguimiento de aciertos, tropiezos y expiraciones por tiempo (Módulo de Automejora).
+
+## 🛠️ Tecnologías y Librerías Utilizadas
+
+* **Python 3.x**
+* **yfinance:** Extracción de datos de mercado históricos, calendario de balances y cotizaciones en tiempo real.
+* **pandas:** Procesamiento de datos masivos y manipulación de estructuras analíticas.
 
 🤝 ¿Querés dar feedback?
 Este proyecto está en constante evolución dentro del ámbito del trading cuantitativo y sistemático. Si lo probaste, encontraste algún detalle o querés sugerir mejoras, ¡toda crítica constructiva o aporte mediante un Pull Request en el repositorio es más que bienvenido!

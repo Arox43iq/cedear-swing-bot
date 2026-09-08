@@ -5,40 +5,52 @@ import yfinance as yf
 import contextlib
 import io
 
-# UNIVERSO DE CEDEARS AMPLIADO E HIPERLÍQUIDO (TICKERS COMPATIBLES CON YFINANCE BSAS)
+# UNIVERSO DE CEDEARS Y ACCIONES LOCALES (BYMA) AMPLIADO E HIPERLÍQUIDO
 ACTIVOS = [
     # --- TECNOLOGÍA & SEMICONDUCTORES ---
     "AAPL", "MSFT", "GOOGL", "NVDA", "AMZN", "META", "NFLX", "AMD", "INTC", 
     "QCOM", "IBM", "ORCL", "ADBE", "CRM", "PYPL", "UBER", "ABNB", "ASML", 
     "PLTR", "MRVL", "SPOT", "EBAY", "PANW", "AVGO", "TXN", "MU", "AMAT", 
-    "LRCX", "SNOW", "SHOP", "CRWD", "DDOG", "NET", "ZS",
+    "LRCX", "SNOW", "SHOP", "CRWV", "DDOG", "NET", "ZS", "NBIS", "OKLO", 
+    "RKLB", "ALAB", "TEM", "CRWD",
 
     # --- FINANCIERO & BANCOS ---
     "BRKB", "JPM", "C", "GS", "WFC", "AXP", "BAC", "MS", "BLK", "V", 
-    "MA", "PYPL", "SQ", "HOOD", "NU", "STNE", "BBD", "ITUB", "PAGS",
+    "MA", "SQ", "HOOD", "NU", "STNE", "BBD", "ITUB", "PAGS", "XP",
 
     # --- CONSUMO MASIVO & RETAIL ---
     "KO", "PEP", "WMT", "MCD", "NKE", "PG", "DIS", "TGT", "COST", "PM", 
-    "MO", "EL", "CL", "KHC", "SBUX", "MDLZ", "YUM", "ABEV", "ARCO", "MELI",
+    "MO", "EL", "CL", "KHC", "SBUX", "MDLZ", "YUM", "ABEV", "ARCO", "MELI", 
+    "ETSY",
 
     # --- SALUD & FARMACÉUTICAS ---
     "JNJ", "PFE", "MRNA", "ABBV", "AMGN", "ABT", "LLY", "UNH", "CVS", 
-    "BMY", "MRK", "TMO", "DHR", "GILD", "ISRG",
+    "BMY", "MRK", "TMO", "DHR", "GILD", "ISRG", "NVO", "HIMS", "DOCU",
 
     # --- ENERGÍA, PETRÓLEO & MATERIALES ---
     "XOM", "CVX", "COP", "SLB", "EOG", "PXD", "OXY", "VALE", "RIO", "KGC", 
-    "MUX", "SID", "BHP", "FCX", "SCCO", "PAAS", "GOLD", "LAC",
+    "MUX", "SID", "BHP", "FCX", "SCCO", "PAAS", "GOLD", "LAC", "CEG", 
+    "NEE", "FSLR", "MP", "ADGO",
 
     # --- INDUSTRIALES, DEFENSA & AUTOMOTRICES ---
     "CAT", "DE", "GE", "TM", "F", "GM", "LMT", "RTX", "BA", "HON", 
-    "UNP", "UPS", "FDX", "NOC", "GD", "TSLA", "RIVN", "NIO",
+    "UNP", "UPS", "FDX", "NOC", "GD", "TSLA", "RIVN", "NIO", "SPCX", 
+    "SDA", "STLA", "RACE", "ONDS",
 
     # --- TELECOMUNICACIONES, SERVICIOS & OTROS ---
-    "T", "VZ", "TMUS", "CMCSA", "DIS", "NFLX", "SONY", "CHTR", "AMZN",
-    
-    # --- OTROS POPULARES EN BYMA ---
+    "T", "VZ", "TMUS", "CMCSA", "SONY", "CHTR", "BKNG", "BIDU", "BB", 
+    "TEAM", "PG", "JPM", "TIMB",
+
+    # --- OTROS POPULARES EN BYMA (INTERNACIONALES) ---
     "CSCO", "MDT", "SPGI", "GLOB", "DECK", "SYY", "AAP", "CAR", "NUE", 
-    "MSI", "JD", "UPST", "ADI", "CLS", "RBLX", "CCL"
+    "MSI", "JD", "UPST", "ADI", "CLS", "RBLX", "CCL", "SNDK", "IREN", 
+    "VST", "NOW", "SATL", "ASTS", "GPRK", "LREN3", "MGLU3", "XROX", 
+    "SPCE", "O", "BBAS3", "IBM", "MRVL", "SNOW", "CRM", "PANW", "ASML",
+
+    # --- ACCIONES ARGENTINAS (PANEL LÍDER / BYMA) ---
+    "YPFD", "GGAL", "PAMP", "TGSU2", "CEPU", "BMA", "BBAR", "SUPV", 
+    "BYMA", "TGNO4", "TXAR", "TECO2", "TRAN", "METR", "LOMA", "CRES", 
+    "VALO", "EDN", "COME", "ALUA", "IRSA"
 ]
 
 ACTIVOS = list(dict.fromkeys(ACTIVOS))

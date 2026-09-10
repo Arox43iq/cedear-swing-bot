@@ -1,87 +1,587 @@
-# 📈 Bot de Swing Trading Cuantitativo (Estrategia Larry Williams Pro - CEDEARs / BYMA)
+# 📈 Quantitative Swing Trading Research Framework
 
-Script automatizado en Python diseñado para escanear masivamente el universo de CEDEARs en la bolsa argentina (BYMA), aplicando una metodología de trading purista basada en Larry Williams para maximizar la efectividad, cazar sobreventas extremas impulsadas por dinero institucional y blindar el capital con gestión de riesgo milimétrica.
+Framework de investigación cuantitativa en Python orientado al desarrollo, validación y seguimiento prospectivo de estrategias de **swing trading sobre acciones estadounidenses**.
+
+El proyecto comenzó como un scanner técnico experimental basado principalmente en Williams %R, ATR, volumen y tendencia. Desde entonces evolucionó hacia una arquitectura completa de investigación sistemática con:
+
+- backtesting causal;
+- portfolio multi-activo;
+- position sizing por riesgo;
+- validación fuera de muestra;
+- falsificación de hipótesis;
+- análisis de robustez;
+- stress de costes;
+- holdout final;
+- auditoría de implementación;
+- paper trading prospectivo;
+- monitoreo de degradación del edge.
+
+> ⚠️ **Este proyecto es experimental y educativo.**
+>
+> Los resultados históricos no predicen rendimientos futuros.  
+> La estrategia actual continúa bajo validación prospectiva mediante paper trading y no debe interpretarse como una recomendación de inversión ni como autorización para operar capital real.
 
 ---
 
-## 🚀 ¿Qué hace exactamente?
+# 🧠 Filosofía del proyecto
 
-* **🛡️ Escudo Anti-Feriados (EE.UU.):** Valida automáticamente el estado de Wall Street. Si el mercado norteamericano está cerrado o es feriado, el bot pausa las alertas para evitar falsos positivos generados por el bajo volumen y el ruido del mercado local.
-* **🌐 Filtro Macro de Tendencia:** Evalúa el contexto general y prioriza entornos favorables comprobando si el S&P 500 (SPY) se encuentra en tendencia alcista (Precio por encima de la EMA de 200).
-* **🎯 Confluencia Institucional Larry Williams Pro:** Detecta zonas de alta probabilidad cruzando Williams %R (14) en sobreventa extrema y patrones de rechazo con cierre de vela en el tercio superior.
-* **⚡ Filtro de Expansión de Volatilidad (ATR Ratio):** Exige que el rango diario de la vela de giro supere un umbral saludable respecto a su ATR, descartando activos "muertos" o trampas bajistas de baja liquidez.
-* **⚠️ Blindaje Anti-Earnings:** Verifica de forma estricta el calendario de balances corporativos para descartar automáticamente cualquier activo que reporte ganancias en menos de 7 días, evitando sorpresas de gaps bajistas.
-* **📰 Contexto Fundamental & Sentimiento:** Extrae automáticamente noticias financieras recientes asociadas a cada CEDEAR para evaluar el trasfondo de mercado y el sentimiento general de las noticias.
-* **⚖️ Gestión de Riesgo por Volatilidad (ATR):** Calcula los niveles de Stop Loss y Take Profit basándose en el ATR (Average True Range) real del activo (acotado entre un 4% y un 12%), adaptando el riesgo al movimiento diario del papel.
-* **🎯 Take Profit Inteligente:** Proyecta automáticamente el objetivo de ganancia asegurando de forma estricta un Ratio Riesgo/Beneficio mínimo de 1.5x.
-* **⏳ Salida Estricta por Tiempo (5 Ruedas):** Implementa la regla clásica de Larry Williams de cortar por tiempo aquellas operaciones que no logran despegar tras 5 sesiones bursátiles, liberando capital de manera ágil.
-* **🧠 Módulo de Automejora (Autoauditoría):** Evalúa de forma autónoma el rendimiento histórico y el Win Rate real de las señales emitidas mediante un registro persistente.
-* **📂 Sincronización Local:** Genera automáticamente archivos estructurados (`historial_senales_williams_pro.csv`) para realizar un seguimiento continuo de los aciertos, tropiezos y expiraciones temporales.
+El objetivo no es encontrar la configuración con mayor rentabilidad histórica.
 
-## 🚀 Guía Operativa: Cómo operar con el Sistema
+La prioridad es encontrar una estrategia que:
 
-Este bot no es una herramienta de ejecución ciega, sino un **generador cuantitativo de alta probabilidad** diseñado bajo la metodología de Larry Williams, complementado con un flujo de validación institucional. 
+- tenga una ventaja estadística razonablemente estable;
+- sobreviva distintos períodos de mercado;
+- no dependa de unos pocos trades extraordinarios;
+- tolere costes de ejecución mayores;
+- mantenga resultados fuera de muestra;
+- evite utilizar información futura;
+- pueda reproducirse de manera determinista;
+- sea validada posteriormente con datos nunca utilizados durante su desarrollo.
 
-Para operar una señal con éxito, seguí este proceso de 3 pasos:
+Principio central:
 
-### 1️⃣ Paso 1: Escaneo Cuantitativo (El Bot)
-Ejecutá el script principal para obtener el ranking actualizado de CEDEARs:
-* El bot evalúa automáticamente el **Williams %R (14)** en busca de sobreventa extrema.
-* Aplica el filtro de tendencia macro (**EMA 200**), la expansión de volatilidad (**ATR**) y el **Escudo Anti-Feriados / Anti-Earnings**.
-* Te devuelve un Top 10 con los activos más aptos junto a sus niveles matemáticos exactos de **Stop Loss** y **Take Profit**.
 
-### 2️⃣ Paso 2: Validación Visual SMC (El Doble Chequeo)
-Antes de comprometer capital, tomá el activo que encabeza el ranking y abrilo en tu plataforma de gráficos (TradingView / Cocos Capital) aplicando un indicador de **Smart Money Concepts (SMC)**:
-* **Verificá la estructura:** Comprobá que el Stop Loss calculado por el bot coincida o esté protegido detrás de un **Order Block** o soporte institucional clave.
-* **Confirmo el objetivo:** Asegurate de que el Take Profit tenga espacio lógico antes de chocar con una resistencia macro de oferta.
+ROBUSTEZ > BACKTEST MÁXIMO
 
-### 3️⃣ Paso 3: Ejecución y Luz Verde
-* Si la matemática fría del bot y la estructura visual del gráfico confluyen perfectamente (el activo está sobrevendido, respeta la tendencia y apoya en una zona institucional), **se da luz verde para ejecutar la orden** en el broker.
-* Respetá siempre la gestión de riesgo dictada por el ATR.
+
+Un máximo aislado en un backtest se considera menos valioso que una región amplia de parámetros con comportamiento consistente.
+
 ---
 
+# ⏱️ Causalidad del sistema
 
-⏱️ Nota importante sobre el tiempo de ejecución
-Cuando ejecutes python main.py, notarás que la terminal puede demorar entre 7 y 12 minutos en completar todo el proceso. ¡Es totalmente normal y el script no se colgó!
+El motor está diseñado para evitar look-ahead bias.
 
-Esto sucede porque el bot procesa masivamente todo el universo de CEDEARs y, para cada activo, realiza de forma secuencial una consulta web segura a Yahoo Finance para descargar el historial técnico, calcular indicadores complejos, verificar el calendario de balances y extraer las últimas noticias financieras. La paciencia vale la pena para obtener un análisis institucional 100% depurado.
+La secuencia fundamental es:
+
+CLOSE(T)
+   ↓
+generación de señal
+   ↓
+OPEN(T+1)
+   ↓
+entrada potencial
+
+
+Una señal generada utilizando el cierre de una rueda solamente puede ejecutarse a partir de la siguiente sesión disponible.
+
 ---
 
-## ⚙️ Guía de instalación rápida (Paso a Paso para principiantes)
+# 🎯 Arquitectura congelada actual
 
-Si quieres ponerlo a correr en tu computadora desde cero, sigue estos simples pasos:
+Después de múltiples fases de investigación y falsificación, la arquitectura utilizada para la validación prospectiva quedó congelada.
 
-### 1. Requisitos previos
-Asegúrate de tener instalado Python en tu equipo (recuerda marcar la casilla *"Add Python to PATH"* durante su instalación para que funcione desde cualquier terminal).
+Componentes principales:
 
-### 2. Descargar el proyecto
-Puedes clonar el repositorio o descargarlo como archivo ZIP desde el botón verde **"Code" > "Download ZIP"** arriba en esta página, y descomprimirlo en una carpeta de tu computadora.
 
-### 3. Abrir la terminal en la carpeta del proyecto
-* Entra a la carpeta descomprimida del proyecto.
-* En la barra de direcciones superior de la ventana de tu explorador de archivos, borra la ruta actual, escribe `cmd` y presiona **Enter** (se abrirá la terminal directamente en esa ruta).
+Trend
+Pullback
+RS20
+Volume
+Candle
 
-### 4. Instalar las herramientas necesarias
-Copia y pega este comando en la terminal que se abrió y presiona **Enter**:
 
-pip install pandas yfinance
-### 5. Ejecutar el bot
-Una vez instaladas las dependencias, escribe el siguiente comando y presiona Enter para ponerlo a funcionar:
+Filtros estructurales adicionales:
 
-Bash
+
+RS20 >= 1%
+ATR_PCT entre 3% y 5%
+VolRel >= 1.15
+
+
+Gestión base:
+
+
+Take Profit       = 1.8 R
+Stop Loss         = 1.5 ATR
+Risk / trade      = 0.5% del equity
+Max gross exposure= 90%
+Portfolio risk    = 2.5%
+
+
+La arquitectura no debe modificarse utilizando resultados del forward test actual.
+
+Si en el futuro se decide cambiar la estrategia, ese cambio debe formar una **nueva rama experimental** y requerirá una nueva validación con datos futuros.
+
+---
+
+# 🧪 Evolución de la investigación
+
+## V6 — Falsification Lab
+
+Se realizaron experimentos controlados sobre:
+
+- volumen relativo;
+- ATR;
+- RS20;
+- costes;
+- concentración;
+- sensibilidad del portfolio.
+
+El hallazgo más importante fue la aparición de una región robusta alrededor de:
+
+
+ATR_PCT ≈ 3% – 5%
+
+
+en lugar de un único parámetro óptimo.
+
+---
+
+## V7 — Interaction Lab
+
+Se estudiaron interacciones entre los filtros más prometedores.
+
+La combinación:
+
+
+ATR 3–5%
++
+VolRel >= 1.15
+
+
+mostró una mejora consistente respecto del modelo base.
+
+También se realizaron:
+
+- bootstrap por bloques temporales;
+- análisis por semestres;
+- eliminación de grandes ganadores;
+- stress de costes;
+- comparación incremental entre filtros.
+
+---
+
+## V8 — Robustness Lab
+
+La configuración candidata fue sometida a perturbaciones locales.
+
+Se probaron variaciones de:
+
+
+VolRel
+ATR
+universo de acciones
+costes
+concentración
+
+
+La región alrededor de los parámetros seleccionados permaneció razonablemente estable.
+
+Por este motivo se tomó una decisión importante:
+
+
+DETENER LA OPTIMIZACIÓN SOBRE 2023–2025
+
+
+y congelar la arquitectura antes de observar el holdout final.
+
+---
+
+# 🔒 V9 — Final Holdout
+
+El período 2026 fue reservado previamente como conjunto final fuera de muestra.
+
+La arquitectura fue congelada antes de observar sus resultados.
+
+Período evaluado:
+
+
+2026-01-02 → 2026-09-09
+
+
+Resultado aproximado:
+
+
+Return          +17.43%
+Profit Factor     1.59
+Max Drawdown     -4.60%
+Trades              124
+Win Rate          49.2%
+Avg R            +0.257
+
+
+Benchmark SPY durante el mismo período:
+
+
+≈ +12.19%
+
+
+El sistema sobrevivió los criterios previamente establecidos para el holdout.
+
+Esto **no significa que la estrategia esté garantizada**, solamente que logró sobrevivir una prueba que no había sido utilizada para seleccionar sus parámetros.
+
+---
+
+# 🔬 V10 — Operational Audit
+
+Después del holdout se realizó una auditoría adicional sin modificar la estrategia.
+
+Se analizaron:
+
+- costes adicionales;
+- rachas de pérdidas;
+- rolling Profit Factor;
+- rolling AvgR;
+- concentración por ticker;
+- simulaciones Monte Carlo;
+- límites de exposición;
+- sensibilidad operativa.
+
+El sistema continuó siendo positivo incluso bajo distintos niveles de fricción, aunque también aparecieron advertencias importantes:
+
+- deterioro reciente del rolling edge;
+- concentración significativa en algunos grandes ganadores.
+
+El resultado fue clasificado como:
+
+
+PAPER_TRADE_READY_WITH_MONITORING
+
+
+Esto no equivale a una autorización para operar capital real.
+
+---
+
+# 🧪 V11 — Forward / Shadow Trading
+
+Después de finalizar la investigación histórica se inició la fase prospectiva.
+
+Inicio establecido:
+
+
+2026-09-10
+
+
+A partir de esta fecha los nuevos datos son considerados verdaderamente futuros respecto del proceso de desarrollo.
+
+---
+
+## V11.1 — Shadow Engine
+
+`v11_shadow_engine.py`
+
+Implementa la estrategia congelada de manera persistente.
+
+El motor mantiene entre ejecuciones:
+
+- cash;
+- posiciones abiertas;
+- señales pendientes;
+- operaciones;
+- equity;
+- cooldowns;
+- estado del portfolio.
+
+No realiza liquidaciones artificiales simplemente porque termine la ejecución del programa.
+
+Si el programa no se ejecuta durante varias ruedas, procesa cronológicamente las sesiones pendientes cuando vuelve a iniciarse.
+
+---
+
+## V11.2 — Parity Audit
+
+`v11_2_parity_audit.py`
+
+Antes de confiar en el forward engine se realizó una auditoría histórica independiente comparándolo contra el motor canónico.
+
+Resultado:
+
+
+Reference trades       452
+Shadow trades          452
+
+Trade mismatches         0
+Equity mismatches        0
+
+Reference PF       1.406478
+Shadow PF          1.406478
+
+
+La implementación prospectiva reprodujo exactamente el comportamiento esperado sobre el período auditado.
+
+Resultado:
+
+
+PARITY_CONFIRMED
+
+
+---
+
+## V11.3 — Forward Monitoring & Drift Guard
+
+`v11_3_monitor.py`
+
+El monitor es deliberadamente pasivo.
+
+NO:
+
+- genera nuevas señales;
+- cambia parámetros;
+- modifica posiciones;
+- optimiza la estrategia.
+
+Su función es vigilar el comportamiento del sistema prospectivo.
+
+Controla entre otras cosas:
+
+
+Profit Factor
+AvgR
+Drawdown
+Rolling PF
+Rolling AvgR
+Concentración
+Caps de portfolio
+Integridad de archivos
+Causalidad de operaciones
+
+
+Checkpoints previamente definidos:
+
+
+25 trades    → diagnóstico temprano
+50 trades    → diagnóstico
+100 trades   → primera revisión formal
+150 trades
++ 183 días   → revisión madura
+
+
+La estrategia no debe ser retocada simplemente porque aparezca una mala racha durante estas etapas.
+
+---
+
+# 📊 Interpretación correcta de los resultados
+
+Una estrategia puede mostrar un buen backtest y aun así fallar en el futuro.
+
+Existen numerosos riesgos que ningún backtest puede eliminar por completo:
+
+- cambios de régimen;
+- gaps;
+- correlación entre posiciones;
+- survivorship bias;
+- diferencias de ejecución;
+- deslizamiento;
+- cambios en Yahoo Finance;
+- concentración;
+- degradación estructural del edge.
+
+Por este motivo el proyecto separa explícitamente:
+
+
+IN-SAMPLE
+↓
+OUT-OF-SAMPLE
+↓
+ROBUSTNESS
+↓
+FINAL HOLDOUT
+↓
+PAPER TRADING PROSPECTIVO
+↓
+EVENTUAL VALIDACIÓN REAL
+
+
+---
+
+# 📁 Estructura principal
+
+
+bot-acciones/
+│
+├── main.py
+├── research_engine.py
+├── strategy.py
+├── regime_lab.py
+│
+├── v6_falsification_lab.py
+├── v7_interaction_lab.py
+├── v8_robustness_lab.py
+├── v9_final_holdout.py
+├── v10_operational_audit.py
+│
+├── v11_shadow_engine.py
+├── v11_2_parity_audit.py
+├── v11_3_monitor.py
+│
+├── requirements.txt
+├── run.bat
+├── .gitignore
+└── README.md
+
+
+Durante la ejecución también pueden crearse:
+
+
+cache/
+results/
+__pycache__/
+
+
+Estos directorios representan datos locales, caches, resultados experimentales o estado de ejecución y no forman parte del código fuente distribuido mediante Git.
+
+---
+
+# ⚙️ Instalación
+
+## 1. Instalar Python
+
+Se recomienda utilizar una versión moderna de Python 3.
+
+Comprobar instalación:
+
+
+python --version
+
+
+o en Windows:
+
+
+py --version
+
+
+---
+
+## 2. Clonar el repositorio
+
+
+git clone <https://github.com/Arox43iq/cedear-swing-bot>
+cd bot-acciones
+
+
+También puede descargarse desde GitHub utilizando:
+
+
+Code → Download ZIP
+
+
+---
+
+## 3. Crear un entorno virtual
+
+Windows:
+
+
+python -m venv venv
+
+
+Activarlo:
+
+
+venv\Scripts\activate
+
+
+---
+
+## 4. Instalar dependencias
+
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+
+Dependencias principales:
+
+- pandas
+- numpy
+- yfinance
+
+---
+
+# ▶️ Ejecutar
+
+Desde terminal:
+
+
 python main.py
-¡Listo! El bot analizará el mercado de forma automática, validará el estado de Wall Street, calculará los niveles de riesgo profesional y te mostrará el ranking de oportunidades directamente en tu pantalla.
 
-📁 Estructura del Proyecto
-main.py: Script principal que ejecuta el análisis técnico avanzado, filtros de volumen institucional, control macro, scraping de noticias y gestión de riesgo por ATR.
 
-historial_senales_williams_pro.csv: Historial acumulado generado de forma automática para el seguimiento de aciertos, tropiezos y expiraciones por tiempo (Módulo de Automejora).
+En Windows también puede utilizarse:
 
-## 🛠️ Tecnologías y Librerías Utilizadas
 
-* **Python 3.x**
-* **yfinance:** Extracción de datos de mercado históricos, calendario de balances y cotizaciones en tiempo real.
-* **pandas:** Procesamiento de datos masivos y manipulación de estructuras analíticas.
+run.bat
 
-🤝 ¿Querés dar feedback?
-Este proyecto está en constante evolución dentro del ámbito del trading cuantitativo y sistemático. Si lo probaste, encontraste algún detalle o querés sugerir mejoras, ¡toda crítica constructiva o aporte mediante un Pull Request en el repositorio es más que bienvenido!
+
+El menú principal permite acceder a los distintos módulos de investigación y seguimiento.
+
+---
+
+# 🛰️ Rutina actual de paper trading
+
+Durante la fase prospectiva se utilizan principalmente:
+
+
+V11.1 — Shadow / Paper Engine
+V11.3 — Forward Monitor
+
+
+La rutina normal consiste en ejecutarlos después de que cierre el mercado estadounidense y Yahoo Finance haya publicado la nueva vela diaria.
+
+Primero:
+
+
+V11.1
+
+
+y después:
+
+
+V11.3
+
+
+V11.2 no necesita ejecutarse diariamente porque es una auditoría de paridad ya realizada.
+
+Los laboratorios históricos tampoco deben ejecutarse diariamente para buscar nuevas configuraciones.
+
+---
+
+# 🔐 Integridad experimental
+
+Una regla fundamental del proyecto es:
+
+
+NO OPTIMIZAR UTILIZANDO EL FUTURO
+
+
+Los resultados observados durante V11 pertenecen al forward test.
+
+Modificar filtros basándose en ellos y continuar considerando la estrategia como la misma validación invalidaría metodológicamente el experimento.
+
+Cualquier cambio futuro debe documentarse como una nueva versión independiente.
+
+
+# ⚠️ Disclaimer
+
+Este software fue desarrollado con fines educativos, experimentales y de investigación cuantitativa.
+
+No constituye:
+
+- asesoramiento financiero;
+- una recomendación de compra o venta;
+- una garantía de rendimiento;
+- un sistema infalible de inversión.
+
+Los resultados históricos pueden diferir sustancialmente de los resultados futuros.
+
+Toda decisión financiera y todo riesgo asociado al uso del software son responsabilidad de quien lo utiliza.
+
+---
+
+# 🛠️ Estado actual
+
+
+Historical research       ✅
+Falsification             ✅
+Robustness testing        ✅
+Final holdout             ✅
+Operational audit         ✅
+Shadow engine             ✅
+Implementation parity     ✅
+Forward monitoring        ✅
+Prospective validation    🔄 EN CURSO
+Real-money validation     ⏳ NO INICIADA
+
+El objetivo actual no es seguir optimizando el pasado.
+
+El objetivo es observar qué ocurre cuando una estrategia completamente congelada se enfrenta a datos que todavía no existían durante su desarrollo.

@@ -1,5 +1,13 @@
 @echo off
-cd /d C:\Proyectos\bot-acciones
-call venv\Scripts\activate
+title Quantitative Swing Trading Research Framework
+
+cd /d "%~dp0"
+
+if exist "venv\Scripts\activate.bat" (
+    call "venv\Scripts\activate.bat"
+)
+
 python main.py
-exit
+
+echo.
+pause

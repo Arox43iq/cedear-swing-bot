@@ -190,7 +190,9 @@ def _append(path, rows, dedup=None):
 
 
 def _load_prepared_data():
-    raw = re.download_universe("USA")
+    # Prospective engine must request fresh market data. The 24h cache remains
+    # useful for historical labs, but can otherwise hide a newly completed session.
+    raw = re.download_universe("USA", force_refresh=True)
     spy_raw = re.download_spy()
     data, spy = re.prepare(raw, spy_raw)
     if not data:

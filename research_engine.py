@@ -343,8 +343,14 @@ def download_one(ticker: str):
         return None
 
 
-def download_universe(kind="USA"):
-    """Fast, cached Yahoo downloader. USD and ARS portfolios remain separate."""
+def download_universe(kind="USA", force_refresh=False):
+    """Fast Yahoo downloader.
+
+    By default it may reuse the 24h local cache for research/backtests.
+    Set force_refresh=True for live/prospective workflows so today's completed
+    session is requested directly from Yahoo instead of trusting cache age.
+    USD and ARS portfolios remain separate.
+    """
     if kind == "USA":
         syms = [(x, x, "USD") for x in dict.fromkeys(USA_UNIVERSE)]
     elif kind == "CEDEAR":
@@ -359,11 +365,14 @@ def download_universe(kind="USA"):
     print(f"📥 DESCARGANDO UNIVERSO {kind} — {len(syms)} candidatos")
     print("=" * 88)
     print(f"   price-repair: {'ON' if _YF_REPAIR else 'OFF'} | batch={CONFIG['download_batch_size']} | threads={CONFIG['download_threads']}")
-    print("   cache: cache/yahoo/ (24h)")
+    if force_refresh:
+        print("   cache: BYPASS (fresh Yahoo required)")
+    else:
+        print("   cache: cache/yahoo/ (24h)")
 
-    # 1) Local cache first.
+    # 1) Local cache first, unless this is a live/prospective refresh.
     for name, ticker, currency in syms:
-        x = _cache_read(ticker)
+        x = None if force_refresh else _cache_read(ticker)
         if x is not None:
             x.attrs.update(currency=currency, underlying=name, source="cache")
             raw[ticker] = x
@@ -1468,34 +1477,94 @@ def run_research_lab(universe="USA"):
 
 
 def scan_live(universe="USA"):
+    """
+    Live scanner aligned with the frozen V11.1 research specification.
+
+    Important:
+    - This shows valid V11 signal candidates at the latest completed close.
+    - It does NOT reproduce portfolio state (open positions, pending orders,
+      cooldowns, available slots, cash/exposure caps). Therefore a candidate
+      shown here is not automatically an order that V11.1 will execute.
+    - The actual prospective portfolio remains v11_shadow_engine.py.
+    """
     if universe == "BOTH":
         raise ValueError("BOTH está deshabilitado: USD y ARS requieren carteras separadas.")
-    raw = download_universe(universe)
+
+    if universe != "USA":
+        print(
+            "⚠️ El scanner V11 congelado está validado para USA (USD). "
+            "CEDEAR requiere una capa ARS/USD + ratio antes de considerarlo equivalente."
+        )
+        return
+
+    # Import locally to avoid a circular import at module load time:
+    # v6_falsification_lab imports research_engine as `re`.
+    import v6_falsification_lab as v6
+
+    # Exact frozen V11.1 architecture/specification.
+    components = ("trend", "pullback", "rs20", "volume", "candle")
+    filter_spec = {
+        "atr_min": 0.030,
+        "atr_max": 0.050,
+        "volrel_min": 1.15,
+    }
+
+    cfg = dict(CONFIG)
+    cfg.update({
+        "rs20_min": 0.01,
+        "tp_r": 1.8,
+        "stop_atr": 1.5,
+        "risk_per_trade": 0.005,
+        "max_gross_exposure": 0.90,
+        "max_portfolio_risk": 0.025,
+        "commission": 0.0005,
+        "slippage": 0.0005,
+    })
+
+    # Live scanner must never rely on a still-valid 24h research cache.
+    raw = download_universe("USA", force_refresh=True)
     spy_raw = download_spy()
     data, spy = prepare(raw, spy_raw)
     if not data:
         print("❌ No hay datos válidos.")
         return
 
+    # Use the same filter machinery as V11.1 / V6-V9.
+    with v6._signal_filter_patch(filter_spec):
+        signals = precompute_signals(data, cfg, components)
+
     date = max(d for df in data.values() for d in df.index)
     level = market_level(spy, date)
     names = {0: "🔴 DÉBIL", 1: "🟡 NEUTRO", 2: "🟢 FAVORABLE"}
 
-    signals = precompute_signals(data, CONFIG, BASE_COMPONENTS)
     candidates = []
     for ticker, rows in signals.items():
         for x in rows:
             if x["date"] == date:
                 candidates.append(x)
                 break
-    candidates.sort(key=lambda x: (x["rank"], x["score"], x["ticker"]), reverse=True)
 
-    print("\n" + "=" * 110)
-    print(f"📡 OPORTUNIDADES ACTUALES — {universe}")
-    print("=" * 110)
-    print(f"Fecha: {date.date()} | SPY: {names[level]}")
+    candidates.sort(
+        key=lambda x: (x["rank"], x["score"], x["ticker"]),
+        reverse=True,
+    )
+
+    print("\n" + "=" * 118)
+    print("📡 V11.1 FROZEN — CANDIDATOS AL CIERRE (USA / USD)")
+    print("=" * 118)
+    print(f"Fecha señal: {date.date()} | SPY: {names[level]}")
+    print(
+        "Arquitectura: trend + pullback + rs20 + volume + candle | "
+        "RS20 >= 1% | ATR 3–5% | VolRel >= 1.15"
+    )
+    print(
+        "Ejecución teórica: señal al CLOSE(T) -> posible entrada al OPEN(T+1), "
+        "sujeta al estado real del portfolio V11."
+    )
+
     if not candidates:
-        print("❌ No hay señales.")
+        print("\n❌ No hay candidatos V11 válidos en la última rueda.")
+        print("ℹ️ Esto es normal; el sistema no fuerza una señal diaria.")
         return
 
     rows = []
@@ -1507,11 +1576,18 @@ def scan_live(universe="USA"):
             "score": round(x["score"], 3),
             "rank": round(x["rank"], 3),
             "close": round(sf(r.get("Close")), 2),
-            "WPR": round(sf(r.get("WPR")), 1),
             "RS20%": round(sf(r.get("RS20")) * 100, 2),
             "RSI": round(sf(r.get("RSI")), 1),
             "VolRel": round(sf(r.get("VolRel")), 2),
             "ATR%": round(sf(r.get("ATR_PCT")) * 100, 2),
+            "WPR": round(sf(r.get("WPR")), 1),
         })
-    print(pd.DataFrame(rows).to_string(index=False))
-    print("\n⚠️ Investigación solamente; no son órdenes automáticas.")
+
+    print("\n" + pd.DataFrame(rows).to_string(index=False))
+    print(
+        "\n⚠️ CANDIDATO ≠ ORDEN. Para saber qué operación programó realmente el "
+        "portfolio prospectivo, ejecutá V11.1 (opción 11) y revisá sus "
+        "ÓRDENES PENDIENTES / POSICIONES SHADOW."
+    )
+    print("⚠️ Investigación/paper trading; no constituye una recomendación de inversión.")
+
